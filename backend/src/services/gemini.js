@@ -1,13 +1,13 @@
 import { GoogleGenAI, Modality } from '@google/genai';
 import { env } from '../config/env.js';
 import { buildSystemInstruction } from '../prompts/interviewer.js';
+import { TOKEN_GRACE_SEC } from './usage.js';
 
 // Ephemeral tokens live on the v1alpha API.
 const client = env.geminiApiKey
   ? new GoogleGenAI({ apiKey: env.geminiApiKey, httpOptions: { apiVersion: 'v1alpha' } })
   : null;
 
-const TOKEN_LIFETIME_MIN = 12;
 const START_WINDOW_MIN = 2;
 
 export function geminiConfigured() {
@@ -15,10 +15,11 @@ export function geminiConfigured() {
 }
 
 // Creates a single-use token locked to this interview's instructions.
+// It expires when the reserved voice time runs out, so a session cannot outlive its budget.
 // The real API key never leaves the server.
-export async function createLiveToken(interview) {
+export async function createLiveToken(interview, seconds) {
   const now = Date.now();
-  const expiresAt = new Date(now + TOKEN_LIFETIME_MIN * 60 * 1000);
+  const expiresAt = new Date(now + (seconds + TOKEN_GRACE_SEC) * 1000);
 
   const token = await client.authTokens.create({
     config: {
@@ -29,7 +30,7 @@ export async function createLiveToken(interview) {
         model: env.geminiLiveModel,
         config: {
           responseModalities: [Modality.AUDIO],
-          systemInstruction: buildSystemInstruction(interview),
+          systemInstruction: buildSystemInstruction(interview, Math.max(1, Math.round(seconds / 60))),
           inputAudioTranscription: {},
           outputAudioTranscription: {},
         },

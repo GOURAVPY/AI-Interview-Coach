@@ -6,6 +6,7 @@ import { createLiveToken, geminiConfigured } from '../services/gemini.js';
 import { computeSpeechMetrics } from '../services/metrics.js';
 import { NotEnoughAnswersError, scoreInterview } from '../services/scoring.js';
 import { INTERVIEW_MINUTES } from '../prompts/interviewer.js';
+import { UsageLimitError, refundUnused, reserveVoiceTime } from '../services/usage.js';
 
 const createSchema = z.object({
   role: z.enum(ROLES),
@@ -131,6 +132,14 @@ const finishSchema = z.object({
   speechMs: z.number().int().min(0).max(MAX_DURATION_SEC * 1000).optional(),
 });
 
+// Closes out the last voice reservation using the server's own clock, so the browser cannot claim a shorter session.
+async function settleUsage(interview) {
+  if (interview.usageSettled || interview.reservedSec <= 0 || !interview.tokenIssuedAt) return;
+  const usedSec = (Date.now() - interview.tokenIssuedAt.getTime()) / 1000 + 3;
+  await refundUnused(interview.user.toString(), { seconds: interview.reservedSec, day: interview.usageDay, month: interview.usageMonth }, usedSec);
+  interview.usageSettled = true;
+}
+
 async function findOwned(req) {
   if (!mongoose.isValidObjectId(req.params.id)) return null;
   return Interview.findOne({ _id: req.params.id, user: req.userId });
@@ -146,11 +155,37 @@ export async function liveToken(req, res) {
     return res.status(429).json({ error: 'Too many connection attempts for this interview. Start a new one.' });
   }
 
-  const result = await createLiveToken(interview);
+  // A retry for the same interview first settles the previous attempt, so reconnecting does not double-charge.
+  await settleUsage(interview);
+
+  let reservation;
+  try {
+    reservation = await reserveVoiceTime(req.userId);
+  } catch (err) {
+    if (err instanceof UsageLimitError) {
+      await interview.save();
+      return res.status(429).json({ error: err.message, code: err.code });
+    }
+    throw err;
+  }
+
+  let result;
+  try {
+    result = await createLiveToken(interview, reservation.seconds);
+  } catch (err) {
+    await refundUnused(req.userId, reservation, 0);
+    throw err;
+  }
+
   interview.tokensIssued += 1;
+  interview.reservedSec = reservation.seconds;
+  interview.tokenIssuedAt = new Date();
+  interview.usageDay = reservation.day;
+  interview.usageMonth = reservation.month;
+  interview.usageSettled = false;
   await interview.save();
 
-  res.json({ ...result, maxSeconds: INTERVIEW_MINUTES * 60 });
+  res.json({ ...result, maxSeconds: reservation.seconds });
 }
 
 export async function saveTranscript(req, res) {
@@ -174,6 +209,7 @@ export async function finish(req, res) {
   if (!interview) return res.status(404).json({ error: 'Interview not found' });
   if (interview.status === 'completed') return res.json({ interview: toPublic(interview) });
 
+  await settleUsage(interview);
   interview.status = 'completed';
   interview.durationSec = parsed.data.durationSec;
   interview.speechMs = parsed.data.speechMs ?? 0;

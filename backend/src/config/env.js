@@ -6,6 +6,11 @@ for (const key of required) {
   }
 }
 
+function positive(value, fallback) {
+  const n = Number(value);
+  return Number.isFinite(n) && n > 0 ? n : fallback;
+}
+
 export const env = {
   port: Number(process.env.PORT) || 4000,
   clientOrigin: process.env.CLIENT_ORIGIN || 'http://localhost:5173',
@@ -15,4 +20,7 @@ export const env = {
   geminiLiveModel: process.env.GEMINI_LIVE_MODEL || 'gemini-3.8-live',
   geminiScoringModel: process.env.GEMINI_SCORING_MODEL || 'gemini-3.6-flash',
   isProd: process.env.NODE_ENV === 'production',
+  // Live voice is billed by the minute, so it is capped per user per day and across all users per month.
+  userDailyVoiceSec: Math.round(positive(process.env.USER_DAILY_VOICE_MINUTES, 30) * 60),
+  globalMonthlyVoiceSec: Math.round(positive(process.env.GLOBAL_MONTHLY_VOICE_MINUTES, 600) * 60),
 };
