@@ -1,0 +1,66 @@
+.auth {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 24px 16px;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 400px;
+  display: grid;
+  gap: 16px;
+  padding: 28px;
+}
+
+.auth-card h1 {
+  font-weight: 400;
+  font-size: 34px;
+  line-height: 1.05;
+  letter-spacing: -0.045em;
+}
+
+.auth-card .sub {
+  color: var(--mut);
+}
+
+.field {
+  display: grid;
+  gap: 6px;
+}
+
+.field input {
+  height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--line2);
+  border-radius: var(--r);
+  background: #fff;
+  outline: 0;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.field input:focus {
+  border-color: var(--ink);
+  box-shadow: 0 0 0 4px rgba(20, 20, 20, 0.08);
+}
+
+.field small {
+  color: var(--mut);
+  font-size: 12px;
+}
+
+.error {
+  color: var(--err);
+  font-size: 13.5px;
+}
+
+.switch {
+  text-align: center;
+  font-size: 13.5px;
+  color: var(--mut);
+}
+
+.switch a {
+  color: var(--ink);
+  font-weight: 500;
+}
