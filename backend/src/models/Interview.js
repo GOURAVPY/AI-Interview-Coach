@@ -11,6 +11,7 @@ const interviewSchema = new mongoose.Schema(
     durationSec: { type: Number, default: 0 },
     overallScore: { type: Number, min: 0, max: 100, default: null },
     endedAt: { type: Date, default: null },
+    speechMs: { type: Number, default: 0 },
     tokensIssued: { type: Number, default: 0 },
     transcript: {
       type: [

@@ -46,8 +46,8 @@ export default function InterviewRoom() {
       <main className="room-center">
         <span className="cap">Interview finished</span>
         <h1>This interview is already complete.</h1>
-        <Link to="/dashboard" className="btn">
-          Back to dashboard
+        <Link to={`/report/${id}`} className="btn">
+          View my report
         </Link>
       </main>
     );
@@ -127,9 +127,14 @@ export default function InterviewRoom() {
           )}
 
           {live.phase === 'ended' && (
-            <Link to="/dashboard" className="btn">
-              Back to dashboard
-            </Link>
+            <>
+              <Link to={`/report/${id}`} className="btn">
+                View my report
+              </Link>
+              <Link to="/dashboard" className="btn outline">
+                Dashboard
+              </Link>
+            </>
           )}
         </div>
 

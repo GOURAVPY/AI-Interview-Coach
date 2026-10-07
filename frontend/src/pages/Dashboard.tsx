@@ -90,6 +90,7 @@ export default function Dashboard() {
         <ul>
           {data?.recent.map((item) => (
             <li key={item.id}>
+              <Link to={item.status === 'completed' ? `/report/${item.id}` : `/interview/${item.id}`} className="row">
               <div>
                 <b>{item.role}</b>
                 <span className="cap">
@@ -97,6 +98,7 @@ export default function Dashboard() {
                 </span>
               </div>
               <span className="score">{item.status === 'completed' && item.overallScore != null ? item.overallScore : '…'}</span>
+              </Link>
             </li>
           ))}
         </ul>

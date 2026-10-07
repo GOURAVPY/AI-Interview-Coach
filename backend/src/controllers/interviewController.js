@@ -118,6 +118,7 @@ const transcriptSchema = z.object({
 
 const finishSchema = z.object({
   durationSec: z.number().int().min(0).max(MAX_DURATION_SEC),
+  speechMs: z.number().int().min(0).max(MAX_DURATION_SEC * 1000).optional(),
 });
 
 async function findOwned(req) {
@@ -165,6 +166,7 @@ export async function finish(req, res) {
 
   interview.status = 'completed';
   interview.durationSec = parsed.data.durationSec;
+  interview.speechMs = parsed.data.speechMs ?? 0;
   interview.endedAt = new Date();
   await interview.save();
   res.json({ interview: toPublic(interview) });
@@ -195,7 +197,7 @@ export async function report(req, res) {
   }
 
   const { overallScore, ...rest } = scored;
-  interview.report = { ...rest, overallScore, metrics: computeSpeechMetrics(transcript, interview.language), createdAt: new Date() };
+  interview.report = { ...rest, overallScore, metrics: computeSpeechMetrics(transcript, interview.language, interview.speechMs), createdAt: new Date() };
   interview.overallScore = overallScore;
   interview.markModified('report');
   await interview.save();

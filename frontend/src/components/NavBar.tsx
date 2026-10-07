@@ -34,7 +34,7 @@ export default function NavBar() {
   const { pathname } = useLocation();
   const activeIndex = Math.max(
     0,
-    items.findIndex((item) => pathname.startsWith(item.to)),
+    items.findIndex((item) => pathname.startsWith(item.to) || (item.to === '/history' && pathname.startsWith('/report/'))),
   );
 
   return (

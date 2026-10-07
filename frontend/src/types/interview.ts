@@ -14,9 +14,36 @@ export interface TranscriptTurn {
   text: string;
 }
 
+export interface ReportAnswer {
+  question: string;
+  answerExcerpt: string;
+  score: number;
+  feedback: string;
+  betterAnswer: string;
+}
+
+export interface SpeechMetrics {
+  paceUnit: string;
+  pace: number | null;
+  totalUnits: number;
+  speakingSec: number;
+  fillers: { label: string; count: number }[];
+  totalFillers: number;
+}
+
+export interface Report {
+  overallScore: number;
+  summary: string;
+  strengths: string[];
+  improvements: string[];
+  answers: ReportAnswer[];
+  metrics: SpeechMetrics;
+}
+
 export interface InterviewDetail extends InterviewSummaryItem {
   jobPost: string;
   transcript: TranscriptTurn[];
+  report: Report | null;
 }
 
 export interface DashboardSummary {

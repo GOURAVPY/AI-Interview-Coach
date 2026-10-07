@@ -4,6 +4,8 @@ import { api } from '../services/api';
 import type { TranscriptTurn } from '../types/interview';
 import { AudioPlayer, INPUT_SAMPLE_RATE, arrayBufferToBase64, base64ToFloat32 } from '../utils/audio';
 
+const SPEECH_RMS = 0.015;
+
 export type Phase = 'idle' | 'connecting' | 'live' | 'saving' | 'ended' | 'error';
 export type Speaker = TranscriptTurn['speaker'];
 
@@ -26,19 +28,27 @@ export function useLiveInterview(interviewId: string) {
   const micCtxRef = useRef<AudioContext | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const turnsRef = useRef<TranscriptTurn[]>([]);
+  // When each turn started and last got text, to estimate how long the candidate spoke.
+  const timingRef = useRef<{ first: number; last: number }[]>([]);
   const mutedRef = useRef(false);
   const startedAtRef = useRef(0);
+  // Milliseconds of real speech picked up by the mic while the interviewer is quiet.
+  const speechMsRef = useRef(0);
   const endingRef = useRef(false);
   const timerRef = useRef<number | undefined>(undefined);
 
   const pushText = useCallback((speaker: Speaker, text: string) => {
     if (!text) return;
     const list = turnsRef.current;
+    const timing = timingRef.current;
+    const now = Date.now();
     const last = list[list.length - 1];
     if (last && last.speaker === speaker) {
       list[list.length - 1] = { speaker, text: last.text + text };
+      timing[timing.length - 1].last = now;
     } else {
       list.push({ speaker, text });
+      timing.push({ first: now, last: now });
     }
     setTurns([...list]);
     setActiveSpeaker(speaker);
@@ -66,11 +76,13 @@ export function useLiveInterview(interviewId: string) {
     setPhase('saving');
 
     try {
-      const transcript = turnsRef.current.filter((t) => t.text.trim());
+      const transcript = turnsRef.current
+        .map((t, i) => ({ ...t, durationMs: timingRef.current[i] ? timingRef.current[i].last - timingRef.current[i].first : 0 }))
+        .filter((t) => t.text.trim());
       if (transcript.length) {
         await api(`/interviews/${interviewId}/transcript`, { method: 'PUT', body: { transcript } });
       }
-      await api(`/interviews/${interviewId}/finish`, { method: 'POST', body: { durationSec } });
+      await api(`/interviews/${interviewId}/finish`, { method: 'POST', body: { durationSec, speechMs: Math.round(speechMsRef.current) } });
       setPhase('ended');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not save the interview');
@@ -101,6 +113,8 @@ export function useLiveInterview(interviewId: string) {
     setPhase('connecting');
     endingRef.current = false;
     turnsRef.current = [];
+    timingRef.current = [];
+    speechMsRef.current = 0;
     setTurns([]);
 
     try {
@@ -144,6 +158,13 @@ export function useLiveInterview(interviewId: string) {
       const node = new AudioWorkletNode(micCtx, 'pcm-capture');
       node.port.onmessage = (event: MessageEvent<ArrayBuffer>) => {
         if (mutedRef.current) return;
+        const samples = new Int16Array(event.data);
+        let sum = 0;
+        for (let i = 0; i < samples.length; i++) sum += samples[i] * samples[i];
+        const rms = Math.sqrt(sum / samples.length) / 32768;
+        if (rms > SPEECH_RMS && !playerRef.current?.playing) {
+          speechMsRef.current += (samples.length / INPUT_SAMPLE_RATE) * 1000;
+        }
         sessionRef.current?.sendRealtimeInput({
           audio: { data: arrayBufferToBase64(event.data), mimeType: `audio/pcm;rate=${INPUT_SAMPLE_RATE}` },
         });

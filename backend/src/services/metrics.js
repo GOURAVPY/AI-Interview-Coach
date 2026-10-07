@@ -38,14 +38,15 @@ function countMatches(text, pattern) {
   return (text.match(re) ?? []).length;
 }
 
-export function computeSpeechMetrics(transcript, language) {
+// speechMs is the time the mic actually heard the candidate. Falls back to the transcript's turn timing.
+export function computeSpeechMetrics(transcript, language, speechMs = 0) {
   const candidate = transcript.filter((t) => t.speaker === 'candidate');
   const text = candidate.map((t) => t.text).join(' ');
   const isJapanese = language === 'Japanese';
 
   const units = isJapanese ? text.replace(/[\s\p{P}]/gu, '').length : text.split(/\s+/).filter(Boolean).length;
 
-  const speakingMs = candidate.reduce((sum, t) => sum + (t.durationMs ?? 0), 0);
+  const speakingMs = speechMs > 0 ? speechMs : candidate.reduce((sum, t) => sum + (t.durationMs ?? 0), 0);
   const speakingMinutes = speakingMs / 60000;
   const pace = speakingMinutes >= 1 / 12 ? Math.round(units / speakingMinutes) : null; // need at least 5 seconds of speech
 

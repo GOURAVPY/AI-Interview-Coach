@@ -6,6 +6,7 @@ import ComingSoon from './pages/ComingSoon';
 import Dashboard from './pages/Dashboard';
 import InterviewRoom from './pages/InterviewRoom';
 import Practice from './pages/Practice';
+import Report from './pages/Report';
 
 export default function App() {
   return (
@@ -17,6 +18,7 @@ export default function App() {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/practice" element={<Practice />} />
           <Route path="/interview/:id" element={<InterviewRoom />} />
+          <Route path="/report/:id" element={<Report />} />
           <Route path="/history" element={<ComingSoon title="History" />} />
           <Route path="/profile" element={<ComingSoon title="Profile" />} />
         </Route>
