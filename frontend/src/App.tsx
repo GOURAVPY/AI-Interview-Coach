@@ -7,6 +7,7 @@ import History from './pages/History';
 import Dashboard from './pages/Dashboard';
 import InterviewRoom from './pages/InterviewRoom';
 import Practice from './pages/Practice';
+import Profile from './pages/Profile';
 import Report from './pages/Report';
 
 export default function App() {
@@ -21,7 +22,7 @@ export default function App() {
           <Route path="/interview/:id" element={<InterviewRoom />} />
           <Route path="/report/:id" element={<Report />} />
           <Route path="/history" element={<History />} />
-          <Route path="/profile" element={<ComingSoon title="Profile" />} />
+          <Route path="/profile" element={<Profile />} />
         </Route>
       </Route>
       <Route path="*" element={<Navigate to="/dashboard" replace />} />

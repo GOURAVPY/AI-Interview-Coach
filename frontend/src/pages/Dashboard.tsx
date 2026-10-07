@@ -22,7 +22,7 @@ export default function Dashboard() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    api<DashboardSummary>('/interviews/summary')
+    api<DashboardSummary>(`/interviews/summary?tz=${new Date().getTimezoneOffset()}`)
       .then(setData)
       .catch((err) => setError(err instanceof Error ? err.message : 'Could not load your dashboard'));
   }, []);

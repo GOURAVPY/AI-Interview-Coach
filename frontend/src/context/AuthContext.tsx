@@ -8,6 +8,13 @@ interface AuthState {
   login: (email: string, password: string) => Promise<void>;
   register: (name: string, email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  updateProfile: (data: ProfileInput) => Promise<void>;
+}
+
+export interface ProfileInput {
+  name: string;
+  targetRole: string;
+  targetCountry: string;
 }
 
 const AuthContext = createContext<AuthState | null>(null);
@@ -38,7 +45,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   }, []);
 
-  return <AuthContext.Provider value={{ user, loading, login, register, logout }}>{children}</AuthContext.Provider>;
+  const updateProfile = useCallback(async (data: ProfileInput) => {
+    const res = await api<{ user: User }>('/auth/profile', { method: 'PATCH', body: data });
+    setUser(res.user);
+  }, []);
+
+  return (
+    <AuthContext.Provider value={{ user, loading, login, register, logout, updateProfile }}>{children}</AuthContext.Provider>
+  );
 }
 
 export function useAuth() {

@@ -52,6 +52,20 @@ export interface HistoryItem extends InterviewSummaryItem {
   paceUnit: string | null;
 }
 
+export interface ActivityDay {
+  date: string;
+  count: number;
+  minutes: number;
+}
+
+export interface ActivityData {
+  days: ActivityDay[];
+  totalInterviews: number;
+  activeDays: number;
+  currentStreak: number;
+  longestStreak: number;
+}
+
 export interface DashboardSummary {
   stats: {
     interviews: number;
