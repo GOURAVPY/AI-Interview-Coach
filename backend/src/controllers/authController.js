@@ -2,6 +2,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { z } from 'zod';
 import { env } from '../config/env.js';
+import { ROLES } from '../config/options.js';
 import { User } from '../models/User.js';
 import { COOKIE_NAME } from '../middleware/auth.js';
 
@@ -14,6 +15,12 @@ const registerSchema = z.object({
 const loginSchema = z.object({
   email: z.string().trim().toLowerCase().email(),
   password: z.string().min(1),
+});
+
+const profileSchema = z.object({
+  name: z.string().trim().min(1).max(80),
+  targetRole: z.union([z.enum(ROLES), z.literal('')]),
+  targetCountry: z.string().trim().max(60),
 });
 
 const SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000;
@@ -68,6 +75,15 @@ export function logout(_req, res) {
 
 export async function me(req, res) {
   const user = await User.findById(req.userId);
+  if (!user) return res.status(401).json({ error: 'Account not found' });
+  res.json({ user: user.toPublic() });
+}
+
+export async function updateProfile(req, res) {
+  const parsed = profileSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: firstIssue(parsed) });
+
+  const user = await User.findByIdAndUpdate(req.userId, parsed.data, { new: true, runValidators: true });
   if (!user) return res.status(401).json({ error: 'Account not found' });
   res.json({ user: user.toPublic() });
 }

@@ -1,10 +1,11 @@
 import { Router } from 'express';
-import { create, finish, getOne, list, liveToken, report, saveTranscript, summary } from '../controllers/interviewController.js';
+import { activity, create, finish, getOne, list, liveToken, report, saveTranscript, summary } from '../controllers/interviewController.js';
 import { requireAuth } from '../middleware/auth.js';
 
 const router = Router();
 router.use(requireAuth);
 router.get('/summary', summary);
+router.get('/activity', activity);
 router.get('/', list);
 router.post('/', create);
 router.get('/:id', getOne);

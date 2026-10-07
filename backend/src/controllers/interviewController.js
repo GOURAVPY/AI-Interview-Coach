@@ -32,14 +32,24 @@ function toPublic(i) {
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-function dayKey(date) {
-  return Math.floor(date.getTime() / DAY_MS);
+// offsetMin is the browser's getTimezoneOffset(), so days follow the user's own clock.
+function tzOffset(req) {
+  const n = Number(req.query.tz);
+  return Number.isFinite(n) ? Math.max(-840, Math.min(840, Math.round(n))) : 0;
+}
+
+function dayKey(date, offsetMin = 0) {
+  return Math.floor((date.getTime() - offsetMin * 60000) / DAY_MS);
+}
+
+function dayString(key) {
+  return new Date(key * DAY_MS).toISOString().slice(0, 10);
 }
 
 // Consecutive practice days ending today or yesterday.
-function currentStreak(dates) {
-  const days = new Set(dates.map((d) => dayKey(d)));
-  let cursor = dayKey(new Date());
+function currentStreak(dates, offsetMin = 0) {
+  const days = new Set(dates.map((d) => dayKey(d, offsetMin)));
+  let cursor = dayKey(new Date(), offsetMin);
   if (!days.has(cursor)) cursor -= 1;
 
   let streak = 0;
@@ -67,7 +77,7 @@ export async function summary(req, res) {
       interviews: completed.length,
       averageScore,
       practiceMinutes,
-      streakDays: currentStreak(completed.map((i) => i.endedAt ?? i.createdAt)),
+      streakDays: currentStreak(completed.map((i) => i.endedAt ?? i.createdAt), tzOffset(req)),
     },
     recent: recent.map((i) => ({
       id: i._id.toString(),
@@ -228,4 +238,44 @@ export async function list(req, res) {
   }));
 
   res.json({ interviews: items });
+}
+
+function longestStreak(sortedKeys) {
+  let best = 0;
+  let run = 0;
+  let prev = null;
+  for (const key of sortedKeys) {
+    run = prev !== null && key === prev + 1 ? run + 1 : 1;
+    best = Math.max(best, run);
+    prev = key;
+  }
+  return best;
+}
+
+// One entry per day with practice in the last year, for the profile's activity graph.
+export async function activity(req, res) {
+  const offset = tzOffset(req);
+  const since = new Date(Date.now() - 372 * DAY_MS);
+
+  const docs = await Interview.find({ user: new mongoose.Types.ObjectId(req.userId), status: 'completed', endedAt: { $gte: since } })
+    .select('endedAt durationSec')
+    .lean();
+
+  const byDay = new Map();
+  for (const d of docs) {
+    const key = dayKey(d.endedAt, offset);
+    const entry = byDay.get(key) ?? { count: 0, seconds: 0 };
+    entry.count += 1;
+    entry.seconds += d.durationSec;
+    byDay.set(key, entry);
+  }
+
+  const keys = [...byDay.keys()].sort((a, b) => a - b);
+  res.json({
+    days: keys.map((k) => ({ date: dayString(k), count: byDay.get(k).count, minutes: Math.round(byDay.get(k).seconds / 60) })),
+    totalInterviews: docs.length,
+    activeDays: keys.length,
+    currentStreak: currentStreak(docs.map((d) => d.endedAt), offset),
+    longestStreak: longestStreak(keys),
+  });
 }
