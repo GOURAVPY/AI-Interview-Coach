@@ -203,3 +203,29 @@ export async function report(req, res) {
   await interview.save();
   res.json({ interview: toPublic(interview) });
 }
+
+// Every interview for the History page, newest first, plus the numbers behind the progress chart.
+export async function list(req, res) {
+  const userId = new mongoose.Types.ObjectId(req.userId);
+  const docs = await Interview.find({ user: userId })
+    .sort({ createdAt: -1 })
+    .limit(200)
+    .select('role level language status overallScore durationSec endedAt createdAt report.metrics.totalFillers report.metrics.pace report.metrics.paceUnit')
+    .lean();
+
+  const items = docs.map((i) => ({
+    id: i._id.toString(),
+    role: i.role,
+    level: i.level,
+    language: i.language,
+    status: i.status,
+    overallScore: i.overallScore,
+    durationSec: i.durationSec,
+    createdAt: i.createdAt,
+    totalFillers: i.report?.metrics?.totalFillers ?? null,
+    pace: i.report?.metrics?.pace ?? null,
+    paceUnit: i.report?.metrics?.paceUnit ?? null,
+  }));
+
+  res.json({ interviews: items });
+}
