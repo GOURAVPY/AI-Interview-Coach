@@ -1,0 +1,82 @@
+:root {
+  --bg: #ececeb;
+  --card: #f6f6f4;
+  --ink: #141414;
+  --mut: rgba(20, 20, 20, 0.6);
+  --line: rgba(20, 20, 20, 0.12);
+  --line2: rgba(20, 20, 20, 0.24);
+  --sage: #cbd4c2;
+  --stone: #d8d5ce;
+  --ok: #2f6f4f;
+  --err: #a8352a;
+  --r: 8px;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --spring: cubic-bezier(0.34, 1.45, 0.64, 1);
+  --sans: 'Inter Tight', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font: 400 15px/1.5 var(--sans);
+  letter-spacing: -0.01em;
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+  letter-spacing: inherit;
+}
+
+button {
+  cursor: pointer;
+  background: none;
+  border: 0;
+}
+
+a {
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 3px;
+}
+
+.btn {
+  height: 44px;
+  padding: 0 20px;
+  border-radius: 99px;
+  background: var(--ink);
+  color: var(--bg);
+  font-weight: 500;
+  transition: scale 0.3s var(--spring), opacity 0.2s;
+}
+.btn:hover { opacity: 0.85; }
+.btn:active { scale: 0.97; }
+.btn:disabled { opacity: 0.5; cursor: default; }
+.btn.outline { background: none; color: var(--ink); border: 1px solid var(--line2); }
+
+.cap {
+  font: 500 10px/1 var(--mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--mut);
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  padding: 20px;
+}
