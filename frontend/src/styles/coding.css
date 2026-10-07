@@ -29,11 +29,19 @@
 .coding-grid {
   display: grid;
   grid-template-columns: minmax(300px, 0.85fr) minmax(0, 1.5fr);
+  grid-template-areas:
+    "problem work"
+    "rest work";
+  grid-template-rows: auto 1fr;
   gap: 14px;
   align-items: start;
 }
 
-.side,
+.coding-grid > .problem { grid-area: problem; }
+.coding-grid > .work { grid-area: work; }
+.coding-grid > .side-rest { grid-area: rest; }
+
+.side-rest,
 .work {
   display: grid;
   gap: 14px;
@@ -374,10 +382,11 @@
 @media (max-width: 900px) {
   .coding-grid {
     grid-template-columns: 1fr;
-  }
-
-  .work {
-    order: -1;
+    grid-template-areas:
+      "problem"
+      "work"
+      "rest";
+    grid-template-rows: auto;
   }
 
   .editor-frame {

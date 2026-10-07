@@ -1,6 +1,6 @@
 import { indentWithTab } from '@codemirror/commands';
 import { javascript } from '@codemirror/lang-javascript';
-import { EditorState, StateEffect, StateField, Transaction, type Extension } from '@codemirror/state';
+import { EditorState, Prec, StateEffect, StateField, Transaction, type Extension } from '@codemirror/state';
 import { Decoration, EditorView, GutterMarker, gutter, keymap, type DecorationSet } from '@codemirror/view';
 import { basicSetup } from 'codemirror';
 import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
@@ -106,16 +106,19 @@ const CodeEditor = forwardRef<EditorHandle, Props>(function CodeEditor({ initial
     const extensions: Extension[] = [
       basicSetup,
       javascript(),
-      keymap.of([
-        indentWithTab,
-        {
-          key: 'Mod-Enter',
-          run: () => {
-            onRunRef.current();
-            return true;
+      // Highest priority: the default keymap already uses Ctrl+Enter to insert a blank line.
+      Prec.highest(
+        keymap.of([
+          {
+            key: 'Mod-Enter',
+            run: () => {
+              onRunRef.current();
+              return true;
+            },
           },
-        },
-      ]),
+        ]),
+      ),
+      keymap.of([indentWithTab]),
       notesField,
       noteGutter,
       theme,

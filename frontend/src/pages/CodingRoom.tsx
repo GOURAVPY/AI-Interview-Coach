@@ -32,6 +32,7 @@ export default function CodingRoom() {
   const editor = useRef<EditorHandle>(null);
   const saveTimer = useRef<number | undefined>(undefined);
   const statusRef = useRef<CodingSession['status']>('in_progress');
+  const loadedFor = useRef('');
 
   const note = useCallback((actor: LogEntry['actor'], text: string) => setLog((l) => [{ actor, text }, ...l].slice(0, 30)), []);
 
@@ -43,6 +44,8 @@ export default function CodingRoom() {
   useEffect(() => {
     api<{ session: CodingSession }>(`/coding/sessions/${id}`)
       .then((res) => {
+        if (loadedFor.current === id) return; // React runs effects twice in development
+        loadedFor.current = id;
         setSession(res.session);
         statusRef.current = res.session.status;
         note('ai', res.session.status === 'submitted' ? 'Review loaded.' : 'Loaded the starter code into the editor.');
@@ -195,7 +198,6 @@ export default function CodingRoom() {
       </header>
 
       <div className="coding-grid">
-        <aside className="side">
           <section className="card problem">
             <div className="chips-row">
               {problem.topics.map((t) => (
@@ -216,6 +218,94 @@ export default function CodingRoom() {
               ))}
             </ul>
           </section>
+
+        <section className="work">
+          <div className="card editor-card">
+            <div className="toolbar">
+              <span className="cap">{flash ? 'The AI changed the editor. Ctrl+Z undoes it.' : 'JavaScript · write solve()'}</span>
+              <div className="toolbar-actions">
+                <button className="btn outline small" onClick={resetStarter} disabled={submitted && !review}>
+                  Reset
+                </button>
+                <button className="btn outline small" onClick={() => void run()} disabled={running || aiBusy !== null}>
+                  {running ? 'Running…' : 'Run tests'}
+                </button>
+                {!submitted && (
+                  <button className="btn small" onClick={submit} disabled={running || aiBusy !== null}>
+                    {aiBusy === 'review' ? 'AI is reviewing…' : 'Submit'}
+                  </button>
+                )}
+              </div>
+            </div>
+            <div className={flash ? 'editor-frame ai-flash' : 'editor-frame'}>
+              <CodeEditor ref={editor} initialCode={session.code} onChange={onEdit} onRun={() => void run()} label="Code editor" />
+            </div>
+          </div>
+
+          {error && (
+            <p className="error" role="alert">
+              {error}
+            </p>
+          )}
+
+          <div className="card results" aria-live="polite">
+            <div className="results-head">
+              <h2>Test results</h2>
+              <span className="cap">
+                {submitted && outcome && !outcome.fatal
+                  ? `Latest run ${passedNow}/${problem.tests.length} · submitted ${session.passed}/${session.total}`
+                  : submitted
+                    ? `Submitted · ${session.passed}/${session.total} passed`
+                    : outcome && !outcome.fatal
+                      ? `${passedNow} of ${problem.tests.length} passed`
+                      : 'Run the tests to see results (Ctrl+Enter)'}
+              </span>
+            </div>
+
+            {outcome?.fatal && <p className="error">{outcome.fatal}</p>}
+            {outcome?.timedOut && <p className="error">Some tests timed out. Check for an infinite loop.</p>}
+
+            <ul className="test-list">
+              {outcome &&
+                !outcome.fatal &&
+                outcome.results.map((r) => {
+                  const t = problem.tests[r.index];
+                  return (
+                    <li key={r.index} className={r.passed ? 'pass' : 'fail'}>
+                      <div className="test-line">
+                        <span className="mark" aria-hidden="true">
+                          {r.passed ? '✓' : '✗'}
+                        </span>
+                        <b>{t.hidden ? `Hidden test ${r.index + 1}` : `Test ${r.index + 1}`}</b>
+                        <span className="cap">{r.passed ? 'passed' : 'failed'}</span>
+                      </div>
+                      {!r.passed && !t.hidden && (
+                        <div className="test-detail">
+                          <code>solve({t.args.map(show).join(', ')})</code>
+                          <code>expected {show(t.expected)}</code>
+                          <code>{r.error ? `error: ${r.error}` : `got ${show(r.actual)}`}</code>
+                        </div>
+                      )}
+                      {!r.passed && t.hidden && r.error && (
+                        <div className="test-detail">
+                          <code>error: {r.error}</code>
+                        </div>
+                      )}
+                      {r.logs.length > 0 && (
+                        <div className="test-detail logs">
+                          {r.logs.map((l, i) => (
+                            <code key={i}>console: {l}</code>
+                          ))}
+                        </div>
+                      )}
+                    </li>
+                  );
+                })}
+            </ul>
+          </div>
+        </section>
+
+          <div className="side-rest">
 
           {review && (
             <section className="card review">
@@ -277,91 +367,8 @@ export default function CodingRoom() {
               ))}
             </ul>
           </section>
-        </aside>
-
-        <section className="work">
-          <div className="card editor-card">
-            <div className="toolbar">
-              <span className="cap">{flash ? 'The AI changed the editor. Ctrl+Z undoes it.' : 'JavaScript · write solve()'}</span>
-              <div className="toolbar-actions">
-                <button className="btn outline small" onClick={resetStarter} disabled={submitted && !review}>
-                  Reset
-                </button>
-                <button className="btn outline small" onClick={() => void run()} disabled={running || aiBusy !== null}>
-                  {running ? 'Running…' : 'Run tests'}
-                </button>
-                {!submitted && (
-                  <button className="btn small" onClick={submit} disabled={running || aiBusy !== null}>
-                    {aiBusy === 'review' ? 'AI is reviewing…' : 'Submit'}
-                  </button>
-                )}
-              </div>
-            </div>
-            <div className={flash ? 'editor-frame ai-flash' : 'editor-frame'}>
-              <CodeEditor ref={editor} initialCode={session.code} onChange={onEdit} onRun={() => void run()} label="Code editor" />
-            </div>
           </div>
 
-          {error && (
-            <p className="error" role="alert">
-              {error}
-            </p>
-          )}
-
-          <div className="card results" aria-live="polite">
-            <div className="results-head">
-              <h2>Test results</h2>
-              <span className="cap">
-                {submitted
-                  ? `Submitted · ${session.passed}/${session.total} passed`
-                  : outcome && !outcome.fatal
-                    ? `${passedNow} of ${problem.tests.length} passed`
-                    : 'Run the tests to see results (Ctrl+Enter)'}
-              </span>
-            </div>
-
-            {outcome?.fatal && <p className="error">{outcome.fatal}</p>}
-            {outcome?.timedOut && <p className="error">Some tests timed out. Check for an infinite loop.</p>}
-
-            <ul className="test-list">
-              {outcome &&
-                !outcome.fatal &&
-                outcome.results.map((r) => {
-                  const t = problem.tests[r.index];
-                  return (
-                    <li key={r.index} className={r.passed ? 'pass' : 'fail'}>
-                      <div className="test-line">
-                        <span className="mark" aria-hidden="true">
-                          {r.passed ? '✓' : '✗'}
-                        </span>
-                        <b>{t.hidden ? `Hidden test ${r.index + 1}` : `Test ${r.index + 1}`}</b>
-                        <span className="cap">{r.passed ? 'passed' : 'failed'}</span>
-                      </div>
-                      {!r.passed && !t.hidden && (
-                        <div className="test-detail">
-                          <code>solve({t.args.map(show).join(', ')})</code>
-                          <code>expected {show(t.expected)}</code>
-                          <code>{r.error ? `error: ${r.error}` : `got ${show(r.actual)}`}</code>
-                        </div>
-                      )}
-                      {!r.passed && t.hidden && r.error && (
-                        <div className="test-detail">
-                          <code>error: {r.error}</code>
-                        </div>
-                      )}
-                      {r.logs.length > 0 && (
-                        <div className="test-detail logs">
-                          {r.logs.map((l, i) => (
-                            <code key={i}>console: {l}</code>
-                          ))}
-                        </div>
-                      )}
-                    </li>
-                  );
-                })}
-            </ul>
-          </div>
-        </section>
       </div>
     </main>
   );
