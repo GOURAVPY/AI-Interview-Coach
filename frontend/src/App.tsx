@@ -3,6 +3,7 @@ import AppShell from './components/AppShell';
 import ProtectedRoute from './components/ProtectedRoute';
 import AuthPage from './pages/AuthPage';
 import ComingSoon from './pages/ComingSoon';
+import History from './pages/History';
 import Dashboard from './pages/Dashboard';
 import InterviewRoom from './pages/InterviewRoom';
 import Practice from './pages/Practice';
@@ -19,7 +20,7 @@ export default function App() {
           <Route path="/practice" element={<Practice />} />
           <Route path="/interview/:id" element={<InterviewRoom />} />
           <Route path="/report/:id" element={<Report />} />
-          <Route path="/history" element={<ComingSoon title="History" />} />
+          <Route path="/history" element={<History />} />
           <Route path="/profile" element={<ComingSoon title="Profile" />} />
         </Route>
       </Route>

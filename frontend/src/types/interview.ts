@@ -46,6 +46,12 @@ export interface InterviewDetail extends InterviewSummaryItem {
   report: Report | null;
 }
 
+export interface HistoryItem extends InterviewSummaryItem {
+  totalFillers: number | null;
+  pace: number | null;
+  paceUnit: string | null;
+}
+
 export interface DashboardSummary {
   stats: {
     interviews: number;

@@ -1,0 +1,231 @@
+.history {
+  max-width: 820px;
+  margin: 0 auto;
+  padding: 32px 16px 0;
+  display: grid;
+  gap: 16px;
+}
+
+.history h1 {
+  font-weight: 400;
+  font-size: clamp(30px, 5vw, 44px);
+  line-height: 1.05;
+  letter-spacing: -0.045em;
+  margin-top: 8px;
+}
+
+.progress {
+  display: grid;
+  gap: 16px;
+}
+
+.progress-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.stat-row {
+  display: flex;
+  gap: 28px;
+}
+
+.stat-row > div {
+  display: grid;
+  gap: 8px;
+}
+
+.stat-row b {
+  font-weight: 400;
+  font-size: 34px;
+  line-height: 1;
+  letter-spacing: -0.05em;
+}
+
+.stat-row b.up {
+  color: var(--ok);
+}
+
+.stat-row b.down {
+  color: var(--err);
+}
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--line2);
+  border-radius: 99px;
+  background: #fff;
+}
+
+.tab {
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 99px;
+  font-size: 13px;
+  transition: background 0.3s, color 0.3s;
+}
+
+.tab.on {
+  background: var(--ink);
+  color: var(--bg);
+}
+
+.chart {
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.chart .grid {
+  stroke: var(--line);
+  stroke-width: 1;
+}
+
+.chart .tick {
+  font: 500 10px var(--mono);
+  fill: var(--mut);
+}
+
+.chart .line {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 2.5;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.chart .area {
+  fill: var(--sage);
+  opacity: 0.55;
+}
+
+.chart .dot {
+  fill: var(--ink);
+  stroke: var(--card);
+  stroke-width: 2;
+  transition: r 0.2s var(--spring);
+}
+
+.chart .hit {
+  fill: transparent;
+}
+
+.chart .dot-value {
+  font: 500 11px var(--mono);
+  fill: var(--ink);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.chart .dot-group {
+  outline: none;
+  cursor: default;
+}
+
+.chart .dot-group:hover .dot-value,
+.chart .dot-group:focus .dot-value {
+  opacity: 1;
+}
+
+.chart .dot-group:hover .dot,
+.chart .dot-group:focus .dot {
+  r: 7;
+}
+
+.history .hint {
+  color: var(--mut);
+  font-size: 12.5px;
+}
+
+.list-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.list-head h2 {
+  font-weight: 500;
+  font-size: 18px;
+  letter-spacing: -0.03em;
+}
+
+.history .chips {
+  display: flex;
+  gap: 6px;
+}
+
+.history .chip {
+  height: 30px;
+  padding: 0 12px;
+  border: 1px solid var(--line2);
+  border-radius: 99px;
+  background: #fff;
+  font-size: 13px;
+  transition: background 0.3s, color 0.3s, border-color 0.3s;
+}
+
+.history .chip.on {
+  background: var(--ink);
+  color: var(--bg);
+  border-color: var(--ink);
+}
+
+.history .list ul {
+  list-style: none;
+  padding: 0;
+}
+
+.history .list li {
+  border-top: 1px solid var(--line);
+}
+
+.history .row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  text-decoration: none;
+  transition: opacity 0.2s;
+}
+
+.history .row:hover {
+  opacity: 0.65;
+}
+
+.history .row > div {
+  display: grid;
+  gap: 6px;
+}
+
+.history .score {
+  font: 500 18px var(--mono);
+}
+
+.history .empty {
+  color: var(--mut);
+  padding: 8px 0;
+}
+
+.history .empty a {
+  color: var(--ink);
+  font-weight: 500;
+}
+
+@media (max-width: 520px) {
+  .stat-row {
+    gap: 18px;
+  }
+
+  .tabs {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
