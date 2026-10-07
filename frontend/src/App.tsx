@@ -2,7 +2,6 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import AppShell from './components/AppShell';
 import ProtectedRoute from './components/ProtectedRoute';
 import AuthPage from './pages/AuthPage';
-import ComingSoon from './pages/ComingSoon';
 import History from './pages/History';
 import Dashboard from './pages/Dashboard';
 import InterviewRoom from './pages/InterviewRoom';

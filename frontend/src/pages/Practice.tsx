@@ -1,7 +1,7 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
-import type { InterviewDetail } from '../types/interview';
+import type { InterviewDetail, UsageInfo } from '../types/interview';
 import { JOB_POST_MAX, LANGUAGES, LEVELS, ROLES } from '../utils/options';
 import '../styles/practice.css';
 
@@ -45,6 +45,16 @@ export default function Practice() {
   const [jobPost, setJobPost] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [usage, setUsage] = useState<UsageInfo | null>(null);
+
+  useEffect(() => {
+    api<UsageInfo>('/usage')
+      .then(setUsage)
+      .catch(() => setUsage(null)); // the server enforces the limit anyway
+  }, []);
+
+  const minutesLeft = usage ? Math.floor(usage.dailyRemainingSec / 60) : null;
+  const blocked = usage !== null && (!usage.serviceAvailable || usage.dailyRemainingSec < 60);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -69,6 +79,16 @@ export default function Practice() {
         <h1>Set up your interview.</h1>
         <p>A 10-minute voice interview. The questions follow the role and level you pick.</p>
       </header>
+
+      {usage && (
+        <p className={blocked ? 'quota blocked' : 'quota'} role="status">
+          {!usage.serviceAvailable
+            ? 'Voice interviews are paused for this month because the free limit has been reached.'
+            : usage.dailyRemainingSec < 60
+              ? "You've used today's free voice time. It resets at midnight UTC."
+              : `Free voice time left today: ${minutesLeft} of ${Math.round(usage.dailyLimitSec / 60)} minutes.`}
+        </p>
+      )}
 
       <form className="card setup" onSubmit={onSubmit}>
         <ChipGroup label="Role" options={ROLES} value={role} onChange={setRole} />
@@ -103,7 +123,7 @@ export default function Practice() {
           </p>
         )}
 
-        <button className="btn" type="submit" disabled={busy}>
+        <button className="btn" type="submit" disabled={busy || blocked}>
           {busy ? 'Starting…' : 'Start interview'}
         </button>
       </form>

@@ -52,6 +52,13 @@ export interface HistoryItem extends InterviewSummaryItem {
   paceUnit: string | null;
 }
 
+export interface UsageInfo {
+  dailyLimitSec: number;
+  dailyUsedSec: number;
+  dailyRemainingSec: number;
+  serviceAvailable: boolean;
+}
+
 export interface ActivityDay {
   date: string;
   count: number;

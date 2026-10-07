@@ -100,3 +100,14 @@
   font: 500 10px var(--mono);
   text-align: right;
 }
+
+.quota {
+  font: 500 11px var(--mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--mut);
+}
+
+.quota.blocked {
+  color: var(--err);
+}
