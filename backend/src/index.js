@@ -6,6 +6,7 @@ import { connectDb } from './config/db.js';
 import { env } from './config/env.js';
 import { errorHandler, notFound } from './middleware/errors.js';
 import authRoutes from './routes/authRoutes.js';
+import codingRoutes from './routes/codingRoutes.js';
 import demoRoutes from './routes/demoRoutes.js';
 import interviewRoutes from './routes/interviewRoutes.js';
 import usageRoutes from './routes/usageRoutes.js';
@@ -25,6 +26,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/interviews', interviewRoutes);
 app.use('/api/usage', usageRoutes);
 app.use('/api/demo', demoRoutes);
+app.use('/api/coding', codingRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
