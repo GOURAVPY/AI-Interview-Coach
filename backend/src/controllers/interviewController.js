@@ -1,5 +1,28 @@
 import mongoose from 'mongoose';
+import { z } from 'zod';
+import { LANGUAGES, LEVELS, ROLES } from '../config/options.js';
 import { Interview } from '../models/Interview.js';
+
+const createSchema = z.object({
+  role: z.enum(ROLES),
+  level: z.enum(LEVELS),
+  language: z.enum(LANGUAGES),
+  jobPost: z.string().trim().max(6000).optional().default(''),
+});
+
+function toPublic(i) {
+  return {
+    id: i._id.toString(),
+    role: i.role,
+    level: i.level,
+    language: i.language,
+    jobPost: i.jobPost,
+    status: i.status,
+    overallScore: i.overallScore,
+    durationSec: i.durationSec,
+    createdAt: i.createdAt,
+  };
+}
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -51,4 +74,23 @@ export async function summary(req, res) {
       createdAt: i.createdAt,
     })),
   });
+}
+
+export async function create(req, res) {
+  const parsed = createSchema.safeParse(req.body);
+  if (!parsed.success) {
+    const issue = parsed.error.issues[0];
+    return res.status(400).json({ error: `${issue.path.join('.') || 'input'}: ${issue.message}` });
+  }
+
+  const interview = await Interview.create({ ...parsed.data, user: req.userId });
+  res.status(201).json({ interview: toPublic(interview) });
+}
+
+export async function getOne(req, res) {
+  if (!mongoose.isValidObjectId(req.params.id)) return res.status(404).json({ error: 'Interview not found' });
+
+  const interview = await Interview.findOne({ _id: req.params.id, user: req.userId });
+  if (!interview) return res.status(404).json({ error: 'Interview not found' });
+  res.json({ interview: toPublic(interview) });
 }
