@@ -4,6 +4,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import AuthPage from './pages/AuthPage';
 import ComingSoon from './pages/ComingSoon';
 import Dashboard from './pages/Dashboard';
+import InterviewRoom from './pages/InterviewRoom';
 import Practice from './pages/Practice';
 
 export default function App() {
@@ -15,7 +16,7 @@ export default function App() {
         <Route element={<AppShell />}>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/practice" element={<Practice />} />
-          <Route path="/interview/:id" element={<ComingSoon title="Interview room" />} />
+          <Route path="/interview/:id" element={<InterviewRoom />} />
           <Route path="/history" element={<ComingSoon title="History" />} />
           <Route path="/profile" element={<ComingSoon title="Profile" />} />
         </Route>

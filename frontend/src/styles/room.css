@@ -1,0 +1,204 @@
+.room {
+  max-width: 960px;
+  margin: 0 auto;
+  min-height: 100dvh;
+  padding: 20px 16px 24px;
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  grid-template-rows: auto 1fr;
+  gap: 16px;
+}
+
+.room-top {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.timer {
+  font: 500 22px var(--mono);
+  letter-spacing: 0.04em;
+  padding: 6px 14px;
+  border: 1px solid var(--line2);
+  border-radius: 99px;
+  background: var(--card);
+  transition: color 0.3s, border-color 0.3s;
+}
+
+.timer.low {
+  color: var(--err);
+  border-color: var(--err);
+}
+
+.stage {
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 18px;
+  padding: 24px 16px;
+  border-radius: var(--r);
+  background: var(--sage);
+  min-height: 420px;
+}
+
+.avatar {
+  width: min(260px, 60vw);
+  aspect-ratio: 200 / 220;
+  border-radius: 50%;
+  background: var(--card);
+  overflow: hidden;
+  display: grid;
+  align-items: end;
+  box-shadow: 0 0 0 0 rgba(20, 20, 20, 0.25);
+  transition: box-shadow 0.4s var(--ease);
+}
+
+.avatar svg {
+  width: 100%;
+  height: 100%;
+}
+
+.avatar.speaking {
+  box-shadow: 0 0 0 10px rgba(20, 20, 20, 0.12), 0 0 0 22px rgba(20, 20, 20, 0.06);
+}
+
+.avatar .eyes {
+  transform-origin: 100px 94px;
+  animation: blink 5s infinite;
+}
+
+@keyframes blink {
+  0%, 94%, 100% { transform: scaleY(1); }
+  97% { transform: scaleY(0.1); }
+}
+
+.status {
+  text-align: center;
+  font-size: 15px;
+  max-width: 34ch;
+  min-height: 46px;
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.btn.big {
+  height: 52px;
+  padding: 0 28px;
+  font-size: 16px;
+}
+
+.controls .btn {
+  display: inline-grid;
+  place-items: center;
+  text-decoration: none;
+}
+
+.mic {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--ink);
+  color: var(--bg);
+  transition: scale 0.3s var(--spring), background 0.3s;
+}
+
+.mic:active {
+  scale: 0.92;
+}
+
+.mic.off {
+  background: #fff;
+  color: var(--err);
+  border: 1px solid var(--err);
+}
+
+.mic.hot {
+  animation: pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  50% { box-shadow: 0 0 0 10px rgba(20, 20, 20, 0.14); }
+}
+
+.tip {
+  font-size: 12.5px;
+  color: rgba(20, 20, 20, 0.65);
+}
+
+.transcript {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: 12px;
+  min-height: 0;
+  max-height: calc(100dvh - 90px);
+}
+
+.turns {
+  overflow-y: auto;
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  padding-right: 4px;
+}
+
+.turn {
+  display: grid;
+  gap: 4px;
+  font-size: 14.5px;
+  line-height: 1.5;
+}
+
+.turn.candidate {
+  padding-left: 14px;
+  border-left: 2px solid var(--ink);
+}
+
+.room .empty {
+  color: var(--mut);
+}
+
+.room-center {
+  min-height: 100dvh;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 16px;
+  text-align: center;
+  padding: 24px;
+}
+
+.room-center h1 {
+  font-weight: 400;
+  font-size: 34px;
+  letter-spacing: -0.045em;
+}
+
+.room-center .btn {
+  display: inline-grid;
+  place-items: center;
+  text-decoration: none;
+}
+
+@media (max-width: 760px) {
+  .room {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto 1fr;
+  }
+
+  .stage {
+    min-height: 0;
+  }
+
+  .transcript {
+    max-height: 40dvh;
+  }
+}

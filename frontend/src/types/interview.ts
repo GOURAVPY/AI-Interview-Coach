@@ -9,8 +9,14 @@ export interface InterviewSummaryItem {
   createdAt: string;
 }
 
+export interface TranscriptTurn {
+  speaker: 'interviewer' | 'candidate';
+  text: string;
+}
+
 export interface InterviewDetail extends InterviewSummaryItem {
   jobPost: string;
+  transcript: TranscriptTurn[];
 }
 
 export interface DashboardSummary {
