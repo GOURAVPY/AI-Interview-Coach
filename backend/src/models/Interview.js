@@ -11,6 +11,17 @@ const interviewSchema = new mongoose.Schema(
     durationSec: { type: Number, default: 0 },
     overallScore: { type: Number, min: 0, max: 100, default: null },
     endedAt: { type: Date, default: null },
+    tokensIssued: { type: Number, default: 0 },
+    transcript: {
+      type: [
+        {
+          _id: false,
+          speaker: { type: String, enum: ['interviewer', 'candidate'], required: true },
+          text: { type: String, required: true, maxlength: 4000 },
+        },
+      ],
+      default: [],
+    },
   },
   { timestamps: true },
 );

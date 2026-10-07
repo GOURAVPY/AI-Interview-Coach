@@ -2,6 +2,8 @@ import mongoose from 'mongoose';
 import { z } from 'zod';
 import { LANGUAGES, LEVELS, ROLES } from '../config/options.js';
 import { Interview } from '../models/Interview.js';
+import { createLiveToken, geminiConfigured } from '../services/gemini.js';
+import { INTERVIEW_MINUTES } from '../prompts/interviewer.js';
 
 const createSchema = z.object({
   role: z.enum(ROLES),
@@ -17,6 +19,7 @@ function toPublic(i) {
     level: i.level,
     language: i.language,
     jobPost: i.jobPost,
+    transcript: i.transcript ?? [],
     status: i.status,
     overallScore: i.overallScore,
     durationSec: i.durationSec,
@@ -92,5 +95,73 @@ export async function getOne(req, res) {
 
   const interview = await Interview.findOne({ _id: req.params.id, user: req.userId });
   if (!interview) return res.status(404).json({ error: 'Interview not found' });
+  res.json({ interview: toPublic(interview) });
+}
+
+const MAX_TOKENS_PER_INTERVIEW = 3;
+const MAX_DURATION_SEC = INTERVIEW_MINUTES * 60 + 120;
+
+const transcriptSchema = z.object({
+  transcript: z
+    .array(
+      z.object({
+        speaker: z.enum(['interviewer', 'candidate']),
+        text: z.string().trim().min(1).max(4000),
+      }),
+    )
+    .max(300),
+});
+
+const finishSchema = z.object({
+  durationSec: z.number().int().min(0).max(MAX_DURATION_SEC),
+});
+
+async function findOwned(req) {
+  if (!mongoose.isValidObjectId(req.params.id)) return null;
+  return Interview.findOne({ _id: req.params.id, user: req.userId });
+}
+
+export async function liveToken(req, res) {
+  if (!geminiConfigured()) return res.status(503).json({ error: 'Voice is not configured on the server' });
+
+  const interview = await findOwned(req);
+  if (!interview) return res.status(404).json({ error: 'Interview not found' });
+  if (interview.status !== 'in_progress') return res.status(409).json({ error: 'This interview is already finished' });
+  if (interview.tokensIssued >= MAX_TOKENS_PER_INTERVIEW) {
+    return res.status(429).json({ error: 'Too many connection attempts for this interview. Start a new one.' });
+  }
+
+  const result = await createLiveToken(interview);
+  interview.tokensIssued += 1;
+  await interview.save();
+
+  res.json({ ...result, maxSeconds: INTERVIEW_MINUTES * 60 });
+}
+
+export async function saveTranscript(req, res) {
+  const parsed = transcriptSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: 'Invalid transcript' });
+
+  const interview = await findOwned(req);
+  if (!interview) return res.status(404).json({ error: 'Interview not found' });
+  if (interview.status !== 'in_progress') return res.status(409).json({ error: 'This interview is already finished' });
+
+  interview.transcript = parsed.data.transcript;
+  await interview.save();
+  res.json({ ok: true, turns: interview.transcript.length });
+}
+
+export async function finish(req, res) {
+  const parsed = finishSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: 'Invalid duration' });
+
+  const interview = await findOwned(req);
+  if (!interview) return res.status(404).json({ error: 'Interview not found' });
+  if (interview.status === 'completed') return res.json({ interview: toPublic(interview) });
+
+  interview.status = 'completed';
+  interview.durationSec = parsed.data.durationSec;
+  interview.endedAt = new Date();
+  await interview.save();
   res.json({ interview: toPublic(interview) });
 }

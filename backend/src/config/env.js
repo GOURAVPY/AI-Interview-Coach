@@ -11,5 +11,7 @@ export const env = {
   clientOrigin: process.env.CLIENT_ORIGIN || 'http://localhost:5173',
   mongoUri: process.env.MONGODB_URI,
   jwtSecret: process.env.JWT_SECRET,
+  geminiApiKey: process.env.GEMINI_API_KEY || '',
+  geminiLiveModel: process.env.GEMINI_LIVE_MODEL || 'gemini-3.8-live',
   isProd: process.env.NODE_ENV === 'production',
 };
