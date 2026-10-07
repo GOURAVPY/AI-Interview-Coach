@@ -180,3 +180,7 @@ Planned:
 - Eye-contact tips from the webcam, processed only in the browser
 - A result card to share on LinkedIn
 - A 3D avatar with lip sync (TalkingHead)
+
+## License
+
+Released under the [MIT License](LICENSE).
