@@ -24,6 +24,10 @@ function shortDate(iso: string) {
   return new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
 }
 
+function shortDateTime(iso: string) {
+  return new Date(iso).toLocaleString(undefined, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+}
+
 function minutes(sec: number) {
   return sec < 60 ? `${sec}s` : `${Math.round(sec / 60)} min`;
 }
@@ -46,14 +50,17 @@ export default function History() {
     [items],
   );
 
+  // When everything happened on the same day, label points with the time so the axis is readable.
+  const sameDay = scored.length > 1 && shortDate(scored[0].createdAt) === shortDate(scored[scored.length - 1].createdAt);
+
   const points: ChartPoint[] = useMemo(() => {
     return scored
       .map((i) => {
         const value = metric === 'score' ? i.overallScore : metric === 'fillers' ? i.totalFillers : i.pace;
-        return value == null ? null : { label: shortDate(i.createdAt), value };
+        return value == null ? null : { label: sameDay ? shortDateTime(i.createdAt) : shortDate(i.createdAt), value };
       })
       .filter((p): p is ChartPoint => p !== null);
-  }, [scored, metric]);
+  }, [scored, metric, sameDay]);
 
   const best = scored.length ? Math.max(...scored.map((i) => i.overallScore ?? 0)) : null;
   const change =

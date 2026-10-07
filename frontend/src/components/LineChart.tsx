@@ -13,10 +13,9 @@ const W = 640;
 const H = 240;
 const PAD = { top: 16, right: 20, bottom: 30, left: 40 };
 
+// Round the top of the axis to a multiple of 4 so all five ticks are whole numbers.
 function niceMax(value: number) {
-  if (value <= 5) return 5;
-  const step = 10 ** Math.floor(Math.log10(value));
-  return Math.ceil(value / step) * step;
+  return Math.max(4, Math.ceil(value / 4) * 4);
 }
 
 // A small dependency-free line chart. Hover or focus a dot to read its value.
