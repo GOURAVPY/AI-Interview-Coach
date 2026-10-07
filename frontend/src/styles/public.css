@@ -1,0 +1,69 @@
+.public {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 12px clamp(16px, 4vw, 40px);
+  background: color-mix(in srgb, var(--bg) 82%, transparent);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--line);
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  text-decoration: none;
+}
+
+.brand-mark {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--ink);
+  box-shadow: inset -6px -6px 0 var(--sage);
+}
+
+.topbar nav {
+  display: flex;
+  gap: 8px;
+}
+
+.topbar .btn {
+  height: 38px;
+  padding: 0 16px;
+  display: inline-grid;
+  place-items: center;
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.public > :not(.topbar):not(.foot) {
+  flex: 1;
+}
+
+.foot {
+  padding: 28px clamp(16px, 4vw, 40px);
+  border-top: 1px solid var(--line);
+}
+
+@media (max-width: 480px) {
+  .brand {
+    font-size: 14px;
+  }
+
+  .topbar .btn {
+    padding: 0 12px;
+  }
+}

@@ -15,7 +15,8 @@ interface LiveTokenResponse {
   maxSeconds: number;
 }
 
-export function useLiveInterview(interviewId: string) {
+// apiBase is '/interviews' for signed-in users and '/demo/interviews' for demo visitors.
+export function useLiveInterview(interviewId: string, apiBase = '/interviews') {
   const [phase, setPhase] = useState<Phase>('idle');
   const [error, setError] = useState('');
   const [turns, setTurns] = useState<TranscriptTurn[]>([]);
@@ -80,15 +81,15 @@ export function useLiveInterview(interviewId: string) {
         .map((t, i) => ({ ...t, durationMs: timingRef.current[i] ? timingRef.current[i].last - timingRef.current[i].first : 0 }))
         .filter((t) => t.text.trim());
       if (transcript.length) {
-        await api(`/interviews/${interviewId}/transcript`, { method: 'PUT', body: { transcript } });
+        await api(`${apiBase}/${interviewId}/transcript`, { method: 'PUT', body: { transcript } });
       }
-      await api(`/interviews/${interviewId}/finish`, { method: 'POST', body: { durationSec, speechMs: Math.round(speechMsRef.current) } });
+      await api(`${apiBase}/${interviewId}/finish`, { method: 'POST', body: { durationSec, speechMs: Math.round(speechMsRef.current) } });
       setPhase('ended');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not save the interview');
       setPhase('error');
     }
-  }, [interviewId, releaseAudio]);
+  }, [apiBase, interviewId, releaseAudio]);
 
   const handleMessage = useCallback(
     (message: LiveServerMessage) => {
@@ -128,7 +129,7 @@ export function useLiveInterview(interviewId: string) {
       await player.resume();
       playerRef.current = player;
 
-      const { token, model, maxSeconds } = await api<LiveTokenResponse>(`/interviews/${interviewId}/live-token`, {
+      const { token, model, maxSeconds } = await api<LiveTokenResponse>(`${apiBase}/${interviewId}/live-token`, {
         method: 'POST',
       });
 
@@ -193,7 +194,7 @@ export function useLiveInterview(interviewId: string) {
       );
       setPhase('error');
     }
-  }, [end, handleMessage, interviewId, releaseAudio]);
+  }, [apiBase, end, handleMessage, interviewId, releaseAudio]);
 
   const toggleMute = useCallback(() => {
     mutedRef.current = !mutedRef.current;

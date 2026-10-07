@@ -41,7 +41,8 @@ function formatSeconds(total: number) {
   return m ? `${m}m ${s}s` : `${s}s`;
 }
 
-export default function Report() {
+export default function Report({ demo = false }: { demo?: boolean }) {
+  const base = demo ? '/demo/interviews' : '/interviews';
   const { id = '' } = useParams();
   const [interview, setInterview] = useState<InterviewDetail | null>(null);
   const [error, setError] = useState('');
@@ -52,13 +53,13 @@ export default function Report() {
 
     async function load() {
       try {
-        const first = await api<{ interview: InterviewDetail }>(`/interviews/${id}`);
+        const first = await api<{ interview: InterviewDetail }>(`${base}/${id}`);
         if (cancelled) return;
         setInterview(first.interview);
 
         if (first.interview.status === 'completed' && !first.interview.report) {
           setWorking(true);
-          const made = await api<{ interview: InterviewDetail }>(`/interviews/${id}/report`, { method: 'POST' });
+          const made = await api<{ interview: InterviewDetail }>(`${base}/${id}/report`, { method: 'POST' });
           if (!cancelled) setInterview(made.interview);
         }
       } catch (err) {
@@ -72,7 +73,7 @@ export default function Report() {
     return () => {
       cancelled = true;
     };
-  }, [id]);
+  }, [base, id]);
 
   if (error) {
     return (
@@ -82,8 +83,8 @@ export default function Report() {
         <p className="error" role="alert">
           {error}
         </p>
-        <Link to="/dashboard" className="btn outline back">
-          Back to dashboard
+        <Link to={demo ? "/" : "/dashboard"} className="btn outline back">
+          {demo ? "Back to home" : "Back to dashboard"}
         </Link>
       </main>
     );
@@ -96,7 +97,7 @@ export default function Report() {
       <main className="report">
         <span className="cap">Report</span>
         <h1>This interview is not finished yet.</h1>
-        <Link to={`/interview/${interview.id}`} className="btn back">
+        <Link to={demo ? `/demo/interview/${interview.id}` : `/interview/${interview.id}`} className="btn back">
           Go to the interview room
         </Link>
       </main>
@@ -126,10 +127,28 @@ export default function Report() {
           </span>
           <h1>Your interview report.</h1>
         </div>
-        <Link to="/practice" className="btn">
-          Practise again
+        <Link to={demo ? "/demo" : "/practice"} className="btn">
+          {demo ? "Try another demo" : "Practise again"}
         </Link>
       </header>
+
+      {demo && (
+        <section className="card signup-cta">
+          <div>
+            <span className="cap">Like it?</span>
+            <h2>Save this report and keep practising.</h2>
+            <p>Create a free account. This demo interview is added to it automatically, and you get daily voice time, history and a progress graph.</p>
+          </div>
+          <div className="cta-buttons">
+            <Link to="/register" className="btn">
+              Create free account
+            </Link>
+            <Link to="/login" className="btn outline">
+              Log in
+            </Link>
+          </div>
+        </section>
+      )}
 
       <section className="card overview">
         <ScoreRing score={report.overallScore} />

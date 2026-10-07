@@ -12,18 +12,22 @@ function formatClock(totalSeconds: number) {
   return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
 
-export default function InterviewRoom() {
+// demo is true for visitors without an account: same room, separate API and links.
+export default function InterviewRoom({ demo = false }: { demo?: boolean }) {
+  const base = demo ? '/demo/interviews' : '/interviews';
+  const homePath = demo ? '/' : '/dashboard';
+  const reportPath = (interviewId: string) => (demo ? `/demo/report/${interviewId}` : `/report/${interviewId}`);
   const { id = '' } = useParams();
   const [interview, setInterview] = useState<InterviewDetail | null>(null);
   const [loadError, setLoadError] = useState('');
-  const live = useLiveInterview(id);
+  const live = useLiveInterview(id, base);
   const transcriptRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    api<{ interview: InterviewDetail }>(`/interviews/${id}`)
+    api<{ interview: InterviewDetail }>(`${base}/${id}`)
       .then((res) => setInterview(res.interview))
       .catch((err) => setLoadError(err instanceof Error ? err.message : 'Could not load this interview'));
-  }, [id]);
+  }, [base, id]);
 
   useEffect(() => {
     transcriptRef.current?.scrollTo({ top: transcriptRef.current.scrollHeight, behavior: 'smooth' });
@@ -33,8 +37,8 @@ export default function InterviewRoom() {
     return (
       <main className="room-center">
         <p className="error">{loadError}</p>
-        <Link to="/dashboard" className="btn outline">
-          Back to dashboard
+        <Link to={homePath} className="btn outline">
+          {demo ? "Back to home" : "Back to dashboard"}
         </Link>
       </main>
     );
@@ -46,7 +50,7 @@ export default function InterviewRoom() {
       <main className="room-center">
         <span className="cap">Interview finished</span>
         <h1>This interview is already complete.</h1>
-        <Link to={`/report/${id}`} className="btn">
+        <Link to={reportPath(id)} className="btn">
           View my report
         </Link>
       </main>
@@ -128,11 +132,11 @@ export default function InterviewRoom() {
 
           {live.phase === 'ended' && (
             <>
-              <Link to={`/report/${id}`} className="btn">
+              <Link to={reportPath(id)} className="btn">
                 View my report
               </Link>
-              <Link to="/dashboard" className="btn outline">
-                Dashboard
+              <Link to={homePath} className="btn outline">
+                {demo ? 'Home' : 'Dashboard'}
               </Link>
             </>
           )}

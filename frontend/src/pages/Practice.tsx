@@ -1,41 +1,10 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
+import ChipGroup from '../components/ChipGroup';
 import { api } from '../services/api';
 import type { InterviewDetail, UsageInfo } from '../types/interview';
 import { JOB_POST_MAX, LANGUAGES, LEVELS, ROLES } from '../utils/options';
 import '../styles/practice.css';
-
-function ChipGroup<T extends string>({
-  label,
-  options,
-  value,
-  onChange,
-}: {
-  label: string;
-  options: readonly T[];
-  value: T;
-  onChange: (next: T) => void;
-}) {
-  return (
-    <fieldset className="group">
-      <legend className="cap">{label}</legend>
-      <div className="chips" role="radiogroup" aria-label={label}>
-        {options.map((option) => (
-          <button
-            key={option}
-            type="button"
-            role="radio"
-            aria-checked={option === value}
-            className={option === value ? 'chip on' : 'chip'}
-            onClick={() => onChange(option)}
-          >
-            {option}
-          </button>
-        ))}
-      </div>
-    </fieldset>
-  );
-}
 
 export default function Practice() {
   const navigate = useNavigate();

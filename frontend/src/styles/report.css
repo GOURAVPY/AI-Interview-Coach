@@ -273,3 +273,48 @@
     grid-template-columns: 90px 1fr 24px;
   }
 }
+
+.signup-cta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  background: var(--ink);
+  color: var(--bg);
+  border-color: var(--ink);
+}
+
+.signup-cta .cap {
+  color: rgba(246, 246, 244, 0.6);
+}
+
+.signup-cta h2 {
+  margin: 8px 0 6px;
+  font-weight: 400;
+  font-size: 24px;
+  letter-spacing: -0.04em;
+}
+
+.signup-cta p {
+  color: rgba(246, 246, 244, 0.7);
+  max-width: 46ch;
+  font-size: 14.5px;
+}
+
+.cta-buttons {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.signup-cta .btn {
+  background: var(--sage);
+  color: var(--ink);
+}
+
+.signup-cta .btn.outline {
+  background: none;
+  color: var(--bg);
+  border: 1px solid rgba(246, 246, 244, 0.4);
+}

@@ -111,3 +111,9 @@
 .quota.blocked {
   color: var(--err);
 }
+
+.demo-signup {
+  display: inline-grid;
+  place-items: center;
+  text-decoration: none;
+}

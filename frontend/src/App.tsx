@@ -1,10 +1,13 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import AppShell from './components/AppShell';
 import ProtectedRoute from './components/ProtectedRoute';
+import PublicLayout from './components/PublicLayout';
 import AuthPage from './pages/AuthPage';
-import History from './pages/History';
 import Dashboard from './pages/Dashboard';
+import DemoSetup from './pages/DemoSetup';
+import History from './pages/History';
 import InterviewRoom from './pages/InterviewRoom';
+import Landing from './pages/Landing';
 import Practice from './pages/Practice';
 import Profile from './pages/Profile';
 import Report from './pages/Report';
@@ -12,8 +15,18 @@ import Report from './pages/Report';
 export default function App() {
   return (
     <Routes>
+      {/* Open to everyone, no account needed */}
+      <Route element={<PublicLayout />}>
+        <Route path="/" element={<Landing />} />
+        <Route path="/demo" element={<DemoSetup />} />
+        <Route path="/demo/report/:id" element={<Report demo />} />
+      </Route>
+      <Route path="/demo/interview/:id" element={<InterviewRoom demo />} />
+
       <Route path="/login" element={<AuthPage mode="login" />} />
       <Route path="/register" element={<AuthPage mode="register" />} />
+
+      {/* Signed-in app */}
       <Route element={<ProtectedRoute />}>
         <Route element={<AppShell />}>
           <Route path="/dashboard" element={<Dashboard />} />
@@ -24,7 +37,8 @@ export default function App() {
           <Route path="/profile" element={<Profile />} />
         </Route>
       </Route>
-      <Route path="*" element={<Navigate to="/dashboard" replace />} />
+
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }
