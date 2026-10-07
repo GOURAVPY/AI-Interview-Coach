@@ -143,16 +143,16 @@
   width: var(--cell, 12px);
   height: var(--cell, 12px);
   border-radius: 3px;
-  background: var(--line);
+  background: rgba(20, 20, 20, 0.07);
 }
 
 .cell.future {
   background: transparent;
 }
 
-.cell.l1 { background: #d3dbc9; }
-.cell.l2 { background: #b0c0a1; }
-.cell.l3 { background: #7e9a6e; }
+.cell.l1 { background: #bccaae; }
+.cell.l2 { background: #9db38c; }
+.cell.l3 { background: #6c8d5c; }
 .cell.l4 { background: #2f6f4f; }
 
 .week .cell:not(.future):hover {
