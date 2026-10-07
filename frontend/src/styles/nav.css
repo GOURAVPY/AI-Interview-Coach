@@ -1,0 +1,120 @@
+.nav {
+  --item: 70px;
+  position: fixed;
+  left: 50%;
+  bottom: 22px;
+  translate: -50% 0;
+  z-index: 30;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: calc(var(--n) * var(--item) + 50px);
+  height: 60px;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 18px 30px -16px rgba(20, 20, 20, 0.35);
+}
+
+.nav ul {
+  position: relative;
+  display: flex;
+  width: calc(var(--n) * var(--item));
+  list-style: none;
+  padding: 0;
+}
+
+.nav li {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  width: var(--item);
+  height: 60px;
+}
+
+.nav a {
+  position: relative;
+  display: flex;
+  flex: 1;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  color: var(--mut);
+  text-decoration: none;
+}
+
+.nav .icon {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 55px;
+  height: 55px;
+  border-radius: 50%;
+  background: #fff;
+  color: #222327;
+  transition: 0.5s;
+}
+
+.nav .icon::before {
+  content: '';
+  position: absolute;
+  top: 10px;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--clt);
+  filter: blur(5px);
+  border-radius: 50%;
+  opacity: 0;
+  transition: 0.5s;
+  transition-delay: 0.15s;
+  z-index: -1;
+}
+
+.nav a.active .icon {
+  background: var(--clt);
+  color: #fff;
+  transform: translateY(-27px);
+  transition-delay: 0.25s;
+}
+
+.nav a.active .icon::before {
+  opacity: 0.5;
+  transition-delay: 0.25s;
+}
+
+.nav .indicator {
+  position: absolute;
+  top: -35px;
+  width: var(--item);
+  height: 70px;
+  background: var(--bg);
+  border-radius: 50%;
+  transform: translateX(calc(var(--item) * var(--i)));
+  transition: 0.5s;
+}
+
+.nav .indicator::before,
+.nav .indicator::after {
+  content: '';
+  position: absolute;
+  top: 5px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+}
+
+.nav .indicator::before {
+  left: -27.5px;
+  box-shadow: 15px 18px #fff;
+}
+
+.nav .indicator::after {
+  right: -27.5px;
+  box-shadow: -15px 18px #fff;
+}
+
+@media (max-width: 420px) {
+  .nav {
+    --item: 62px;
+  }
+}

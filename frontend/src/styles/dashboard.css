@@ -1,0 +1,129 @@
+.dash {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 32px 16px 0;
+  display: grid;
+  gap: 16px;
+}
+
+.dash-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.dash-head h1 {
+  font-weight: 400;
+  font-size: clamp(30px, 5vw, 44px);
+  line-height: 1.05;
+  letter-spacing: -0.045em;
+  margin-top: 8px;
+}
+
+.hero-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  padding: 28px;
+  background: var(--ink);
+  color: var(--bg);
+  border-color: var(--ink);
+}
+
+.hero-card .cap {
+  color: rgba(246, 246, 244, 0.6);
+}
+
+.hero-card h2 {
+  font-weight: 400;
+  font-size: 26px;
+  letter-spacing: -0.04em;
+  margin: 8px 0 6px;
+  max-width: 22ch;
+}
+
+.hero-card p {
+  color: rgba(246, 246, 244, 0.65);
+  max-width: 42ch;
+}
+
+.btn.start {
+  display: inline-grid;
+  place-items: center;
+  background: var(--sage);
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.tile-stat {
+  display: grid;
+  gap: 14px;
+}
+
+.tile-stat b {
+  font-weight: 400;
+  font-size: 40px;
+  line-height: 1;
+  letter-spacing: -0.05em;
+}
+
+.recent-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.recent-head h2 {
+  font-weight: 500;
+  font-size: 18px;
+  letter-spacing: -0.03em;
+}
+
+.recent-head a {
+  text-decoration: none;
+}
+
+.recent ul {
+  list-style: none;
+  padding: 0;
+}
+
+.recent li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+}
+
+.recent li > div {
+  display: grid;
+  gap: 6px;
+}
+
+.score {
+  font: 500 18px var(--mono);
+}
+
+.empty {
+  color: var(--mut);
+  padding: 12px 0 4px;
+}
+
+@media (max-width: 640px) {
+  .tiles {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
