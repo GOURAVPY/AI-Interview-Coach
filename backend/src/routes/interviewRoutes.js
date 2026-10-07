@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { create, finish, getOne, liveToken, saveTranscript, summary } from '../controllers/interviewController.js';
+import { create, finish, getOne, liveToken, report, saveTranscript, summary } from '../controllers/interviewController.js';
 import { requireAuth } from '../middleware/auth.js';
 
 const router = Router();
@@ -10,5 +10,6 @@ router.get('/:id', getOne);
 router.post('/:id/live-token', liveToken);
 router.put('/:id/transcript', saveTranscript);
 router.post('/:id/finish', finish);
+router.post('/:id/report', report);
 
 export default router;

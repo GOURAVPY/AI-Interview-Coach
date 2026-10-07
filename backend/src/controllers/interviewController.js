@@ -3,6 +3,8 @@ import { z } from 'zod';
 import { LANGUAGES, LEVELS, ROLES } from '../config/options.js';
 import { Interview } from '../models/Interview.js';
 import { createLiveToken, geminiConfigured } from '../services/gemini.js';
+import { computeSpeechMetrics } from '../services/metrics.js';
+import { NotEnoughAnswersError, scoreInterview } from '../services/scoring.js';
 import { INTERVIEW_MINUTES } from '../prompts/interviewer.js';
 
 const createSchema = z.object({
@@ -19,7 +21,8 @@ function toPublic(i) {
     level: i.level,
     language: i.language,
     jobPost: i.jobPost,
-    transcript: i.transcript ?? [],
+    transcript: (i.transcript ?? []).map((t) => ({ speaker: t.speaker, text: t.text })),
+    report: i.report ?? null,
     status: i.status,
     overallScore: i.overallScore,
     durationSec: i.durationSec,
@@ -107,6 +110,7 @@ const transcriptSchema = z.object({
       z.object({
         speaker: z.enum(['interviewer', 'candidate']),
         text: z.string().trim().min(1).max(4000),
+        durationMs: z.number().int().min(0).max(600000).optional(),
       }),
     )
     .max(300),
@@ -162,6 +166,38 @@ export async function finish(req, res) {
   interview.status = 'completed';
   interview.durationSec = parsed.data.durationSec;
   interview.endedAt = new Date();
+  await interview.save();
+  res.json({ interview: toPublic(interview) });
+}
+
+// Builds the report once: AI scores and tips, plus exact speech metrics counted in code.
+export async function report(req, res) {
+  const interview = await findOwned(req);
+  if (!interview) return res.status(404).json({ error: 'Interview not found' });
+  if (interview.status !== 'completed') return res.status(409).json({ error: 'Finish the interview first' });
+  if (interview.report) return res.json({ interview: toPublic(interview) });
+  if (!geminiConfigured()) return res.status(503).json({ error: 'Scoring is not configured on the server' });
+
+  const transcript = interview.transcript.map((t) => ({ speaker: t.speaker, text: t.text, durationMs: t.durationMs }));
+  if (!transcript.some((t) => t.speaker === 'candidate')) {
+    return res.status(422).json({ error: 'There were no spoken answers to score. Try another interview and answer out loud.' });
+  }
+
+  let scored;
+  try {
+    scored = await scoreInterview({ role: interview.role, level: interview.level, language: interview.language, transcript });
+  } catch (err) {
+    if (err instanceof NotEnoughAnswersError) {
+      return res.status(422).json({ error: 'The interview was too short to score. Answer at least one question out loud.' });
+    }
+    console.error('Scoring failed:', err);
+    return res.status(502).json({ error: 'Scoring failed. Please try again in a moment.' });
+  }
+
+  const { overallScore, ...rest } = scored;
+  interview.report = { ...rest, overallScore, metrics: computeSpeechMetrics(transcript, interview.language), createdAt: new Date() };
+  interview.overallScore = overallScore;
+  interview.markModified('report');
   await interview.save();
   res.json({ interview: toPublic(interview) });
 }

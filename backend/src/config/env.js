@@ -13,5 +13,6 @@ export const env = {
   jwtSecret: process.env.JWT_SECRET,
   geminiApiKey: process.env.GEMINI_API_KEY || '',
   geminiLiveModel: process.env.GEMINI_LIVE_MODEL || 'gemini-3.8-live',
+  geminiScoringModel: process.env.GEMINI_SCORING_MODEL || 'gemini-3.6-flash',
   isProd: process.env.NODE_ENV === 'production',
 };

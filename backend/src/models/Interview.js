@@ -18,10 +18,12 @@ const interviewSchema = new mongoose.Schema(
           _id: false,
           speaker: { type: String, enum: ['interviewer', 'candidate'], required: true },
           text: { type: String, required: true, maxlength: 4000 },
+          durationMs: { type: Number, min: 0, default: 0 },
         },
       ],
       default: [],
     },
+    report: { type: mongoose.Schema.Types.Mixed, default: null },
   },
   { timestamps: true },
 );
