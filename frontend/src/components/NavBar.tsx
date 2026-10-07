@@ -40,9 +40,9 @@ export default function NavBar() {
   return (
     <nav className="nav" aria-label="Main" style={{ '--n': items.length, '--i': activeIndex } as React.CSSProperties}>
       <ul>
-        {items.map((item) => (
+        {items.map((item, index) => (
           <li key={item.to} style={{ '--clt': item.color } as React.CSSProperties}>
-            <NavLink to={item.to} aria-label={item.label} title={item.label}>
+            <NavLink to={item.to} aria-label={item.label} title={item.label} className={index === activeIndex ? 'active' : ''}>
               <span className="icon">
                 <svg viewBox="0 0 24 24" width="24" height="24" {...ICON}>
                   {item.icon}

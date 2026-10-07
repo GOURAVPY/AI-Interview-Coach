@@ -108,7 +108,7 @@ export default function Report() {
       <main className="report">
         <span className="cap">Report</span>
         <h1>Scoring your interview…</h1>
-        <p className="muted">Reading every answer against the scoring guide. This takes a few seconds.</p>
+        <p className="muted">Reading every answer against the scoring guide. This can take up to 20 seconds.</p>
       </main>
     );
   }
