@@ -9,6 +9,10 @@ export interface InterviewSummaryItem {
   createdAt: string;
 }
 
+export interface InterviewDetail extends InterviewSummaryItem {
+  jobPost: string;
+}
+
 export interface DashboardSummary {
   stats: {
     interviews: number;
