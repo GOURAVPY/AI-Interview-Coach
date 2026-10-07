@@ -55,9 +55,14 @@ export default function Dashboard() {
           <h2>Practise your next interview out loud.</h2>
           <p>Pick a role, a level and a language. The interviewer asks, you answer by voice.</p>
         </div>
-        <Link to="/practice" className="btn start">
-          Start an interview
-        </Link>
+        <div className="hero-buttons">
+          <Link to="/practice" className="btn start">
+            Start an interview
+          </Link>
+          <Link to="/coding" className="btn start ghost">
+            Coding round
+          </Link>
+        </div>
       </section>
 
       {error && (

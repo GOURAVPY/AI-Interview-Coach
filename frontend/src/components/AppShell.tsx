@@ -3,7 +3,7 @@ import NavBar from './NavBar';
 
 export default function AppShell() {
   const { pathname } = useLocation();
-  const inRoom = pathname.startsWith('/interview/');
+  const inRoom = pathname.startsWith('/interview/') || pathname.startsWith('/coding/');
 
   return (
     <>

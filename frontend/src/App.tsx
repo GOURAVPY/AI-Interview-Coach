@@ -3,6 +3,8 @@ import AppShell from './components/AppShell';
 import ProtectedRoute from './components/ProtectedRoute';
 import PublicLayout from './components/PublicLayout';
 import AuthPage from './pages/AuthPage';
+import Coding from './pages/Coding';
+import CodingRoom from './pages/CodingRoom';
 import Dashboard from './pages/Dashboard';
 import DemoSetup from './pages/DemoSetup';
 import History from './pages/History';
@@ -31,6 +33,8 @@ export default function App() {
         <Route element={<AppShell />}>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/practice" element={<Practice />} />
+          <Route path="/coding" element={<Coding />} />
+          <Route path="/coding/:id" element={<CodingRoom />} />
           <Route path="/interview/:id" element={<InterviewRoom />} />
           <Route path="/report/:id" element={<Report />} />
           <Route path="/history" element={<History />} />
