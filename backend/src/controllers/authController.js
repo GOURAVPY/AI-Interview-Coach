@@ -5,6 +5,7 @@ import { env } from '../config/env.js';
 import { ROLES } from '../config/options.js';
 import { User } from '../models/User.js';
 import { COOKIE_NAME } from '../middleware/auth.js';
+import { claimDemoInterviews } from '../services/demo.js';
 
 const registerSchema = z.object({
   name: z.string().trim().min(1).max(80),
@@ -51,6 +52,7 @@ export async function register(req, res) {
 
   const passwordHash = await bcrypt.hash(password, 12);
   const user = await User.create({ name, email, passwordHash });
+  await claimDemoInterviews(req, user._id);
   setSession(res, user.id);
   res.status(201).json({ user: user.toPublic() });
 }
@@ -64,6 +66,7 @@ export async function login(req, res) {
   const ok = user && (await bcrypt.compare(password, user.passwordHash));
   if (!ok) return res.status(401).json({ error: 'Wrong email or password' });
 
+  await claimDemoInterviews(req, user._id);
   setSession(res, user.id);
   res.json({ user: user.toPublic() });
 }

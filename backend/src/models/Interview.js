@@ -2,7 +2,10 @@ import mongoose from 'mongoose';
 
 const interviewSchema = new mongoose.Schema(
   {
-    user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
+    // Demo interviews belong to a visitor cookie until that visitor signs up.
+    user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', index: true },
+    visitor: { type: String, index: true },
+    demo: { type: Boolean, default: false },
     role: { type: String, required: true, trim: true },
     level: { type: String, required: true, trim: true },
     language: { type: String, default: 'English' },
@@ -16,8 +19,7 @@ const interviewSchema = new mongoose.Schema(
     // Voice time reserved when the last token was issued, and when. Settled against the server clock on finish.
     reservedSec: { type: Number, default: 0 },
     tokenIssuedAt: { type: Date, default: null },
-    usageDay: { type: String, default: '' },
-    usageMonth: { type: String, default: '' },
+    usageKeys: { type: [String], default: [] },
     usageSettled: { type: Boolean, default: true },
     transcript: {
       type: [

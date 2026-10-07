@@ -6,7 +6,7 @@ import { createLiveToken, geminiConfigured } from '../services/gemini.js';
 import { computeSpeechMetrics } from '../services/metrics.js';
 import { NotEnoughAnswersError, scoreInterview } from '../services/scoring.js';
 import { INTERVIEW_MINUTES } from '../prompts/interviewer.js';
-import { UsageLimitError, refundUnused, reserveVoiceTime } from '../services/usage.js';
+import { UsageLimitError, getDemoStatus, refundUnused, reserveVoiceTime } from '../services/usage.js';
 
 const createSchema = z.object({
   role: z.enum(ROLES),
@@ -107,7 +107,7 @@ export async function create(req, res) {
 export async function getOne(req, res) {
   if (!mongoose.isValidObjectId(req.params.id)) return res.status(404).json({ error: 'Interview not found' });
 
-  const interview = await Interview.findOne({ _id: req.params.id, user: req.userId });
+  const interview = await Interview.findOne({ _id: req.params.id, ...ownerFilter(req) });
   if (!interview) return res.status(404).json({ error: 'Interview not found' });
   res.json({ interview: toPublic(interview) });
 }
@@ -136,13 +136,17 @@ const finishSchema = z.object({
 async function settleUsage(interview) {
   if (interview.usageSettled || interview.reservedSec <= 0 || !interview.tokenIssuedAt) return;
   const usedSec = (Date.now() - interview.tokenIssuedAt.getTime()) / 1000 + 3;
-  await refundUnused(interview.user.toString(), { seconds: interview.reservedSec, day: interview.usageDay, month: interview.usageMonth }, usedSec);
+  await refundUnused({ seconds: interview.reservedSec, keys: interview.usageKeys }, usedSec);
   interview.usageSettled = true;
+}
+
+function ownerFilter(req) {
+  return req.owner.kind === 'user' ? { user: req.owner.id } : { visitor: req.owner.id };
 }
 
 async function findOwned(req) {
   if (!mongoose.isValidObjectId(req.params.id)) return null;
-  return Interview.findOne({ _id: req.params.id, user: req.userId });
+  return Interview.findOne({ _id: req.params.id, ...ownerFilter(req) });
 }
 
 export async function liveToken(req, res) {
@@ -160,7 +164,7 @@ export async function liveToken(req, res) {
 
   let reservation;
   try {
-    reservation = await reserveVoiceTime(req.userId);
+    reservation = await reserveVoiceTime(req.owner);
   } catch (err) {
     if (err instanceof UsageLimitError) {
       await interview.save();
@@ -173,15 +177,14 @@ export async function liveToken(req, res) {
   try {
     result = await createLiveToken(interview, reservation.seconds);
   } catch (err) {
-    await refundUnused(req.userId, reservation, 0);
+    await refundUnused(reservation, 0);
     throw err;
   }
 
   interview.tokensIssued += 1;
   interview.reservedSec = reservation.seconds;
   interview.tokenIssuedAt = new Date();
-  interview.usageDay = reservation.day;
-  interview.usageMonth = reservation.month;
+  interview.usageKeys = reservation.keys;
   interview.usageSettled = false;
   await interview.save();
 
@@ -314,4 +317,26 @@ export async function activity(req, res) {
     currentStreak: currentStreak(docs.map((d) => d.endedAt), offset),
     longestStreak: longestStreak(keys),
   });
+}
+
+const demoCreateSchema = z.object({
+  role: z.enum(ROLES),
+  level: z.enum(LEVELS),
+  language: z.enum(LANGUAGES),
+});
+
+// Starts a demo interview for a visitor who has no account. Time limits are enforced when the voice token is requested.
+export async function createDemo(req, res) {
+  const parsed = demoCreateSchema.safeParse(req.body);
+  if (!parsed.success) {
+    const issue = parsed.error.issues[0];
+    return res.status(400).json({ error: `${issue.path.join('.') || 'input'}: ${issue.message}` });
+  }
+
+  const interview = await Interview.create({ ...parsed.data, visitor: req.owner.id, demo: true });
+  res.status(201).json({ interview: toPublic(interview) });
+}
+
+export async function demoStatus(req, res) {
+  res.json(await getDemoStatus(req.owner));
 }

@@ -22,5 +22,9 @@ export const env = {
   isProd: process.env.NODE_ENV === 'production',
   // Live voice is billed by the minute, so it is capped per user per day and across all users per month.
   userDailyVoiceSec: Math.round(positive(process.env.USER_DAILY_VOICE_MINUTES, 30) * 60),
+  // Demo visitors (no account): lifetime seconds each, and a daily total per network.
+  demoSecondsPerVisitor: Math.round(positive(process.env.DEMO_SECONDS_PER_VISITOR, 180)),
+  demoIpDailySec: Math.round(positive(process.env.DEMO_NETWORK_DAILY_SECONDS, 600)),
+  trustProxy: process.env.TRUST_PROXY || '',
   globalMonthlyVoiceSec: Math.round(positive(process.env.GLOBAL_MONTHLY_VOICE_MINUTES, 600) * 60),
 };

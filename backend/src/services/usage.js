@@ -20,12 +20,36 @@ export function periodKeys(date = new Date()) {
   return { day, month: day.slice(0, 7) };
 }
 
-const userId = (uid, day) => `user:${uid}:${day}`;
-const globalId = (month) => `global:${month}`;
+// Every limit that applies to someone, as counters. Counter ids look like:
+//   user:<id>:<day>     a signed-in user's voice seconds today
+//   visitor:<id>        a demo visitor's lifetime voice seconds
+//   ip:<address>:<day>  all demo voice seconds from one network today
+//   global:<month>      everyone's voice seconds this month
+function buckets(owner) {
+  const { day, month } = periodKeys();
+  const list = [];
 
-async function used(id) {
-  const doc = await Usage.findById(id).lean();
-  return doc?.seconds ?? 0;
+  if (owner.kind === 'user') {
+    list.push({ id: `user:${owner.id}:${day}`, limit: env.userDailyVoiceSec, code: 'user_daily' });
+  } else {
+    list.push({ id: `visitor:${owner.id}`, limit: env.demoSecondsPerVisitor, code: 'demo_used' });
+    list.push({ id: `ip:${owner.ip}:${day}`, limit: env.demoIpDailySec, code: 'demo_network' });
+  }
+  list.push({ id: `global:${month}`, limit: env.globalMonthlyVoiceSec, code: 'global_monthly' });
+  return list;
+}
+
+const MESSAGES = {
+  user_daily: "You've used today's free voice time. It resets at midnight UTC, so please come back tomorrow.",
+  demo_used: "You've used your free demo. Create an account to keep practising.",
+  demo_network: 'Too many demo interviews have been started from your network today. Create an account to continue, or try again tomorrow.',
+  global_monthly: 'Voice interviews are paused for this month because the free limit has been reached. Please come back next month.',
+};
+
+async function usedSeconds(ids) {
+  const docs = await Usage.find({ _id: { $in: ids } }).lean();
+  const map = new Map(docs.map((d) => [d._id, d.seconds]));
+  return ids.map((id) => map.get(id) ?? 0);
 }
 
 // Adds `seconds` only if the counter stays within `limit`. Safe under concurrent requests.
@@ -39,49 +63,64 @@ async function subtract(id, seconds) {
   if (seconds > 0) await Usage.updateOne({ _id: id }, { $inc: { seconds: -seconds } });
 }
 
-export async function getUsage(uid) {
-  const { day, month } = periodKeys();
-  const [userUsed, globalUsed] = await Promise.all([used(userId(uid, day)), used(globalId(month))]);
+// What the Practice page shows a signed-in user.
+export async function getUsage(owner) {
+  const list = buckets(owner);
+  const used = await usedSeconds(list.map((b) => b.id));
+  const userBucket = list[0];
+  const global = list[list.length - 1];
+
   return {
-    dailyLimitSec: env.userDailyVoiceSec,
-    dailyUsedSec: Math.min(userUsed, env.userDailyVoiceSec),
-    dailyRemainingSec: Math.max(0, env.userDailyVoiceSec - userUsed),
-    serviceAvailable: globalUsed + MIN_SESSION_SEC <= env.globalMonthlyVoiceSec,
+    dailyLimitSec: userBucket.limit,
+    dailyUsedSec: Math.min(used[0], userBucket.limit),
+    dailyRemainingSec: Math.max(0, userBucket.limit - used[0]),
+    serviceAvailable: used[used.length - 1] + MIN_SESSION_SEC <= global.limit,
   };
 }
 
-// Reserves voice time before a session starts. Returns how many seconds the session may last.
-export async function reserveVoiceTime(uid) {
-  const { day, month } = periodKeys();
-  const [userUsed, globalUsed] = await Promise.all([used(userId(uid, day)), used(globalId(month))]);
+// What the landing page shows a demo visitor: how long they can still talk.
+export async function getDemoStatus(owner) {
+  const list = buckets(owner);
+  const used = await usedSeconds(list.map((b) => b.id));
+  const left = Math.min(...list.map((b, i) => b.limit - used[i]));
+  const blocked = list.find((b, i) => b.limit - used[i] < MIN_SESSION_SEC);
 
-  const userLeft = env.userDailyVoiceSec - userUsed;
-  const globalLeft = env.globalMonthlyVoiceSec - globalUsed;
+  return {
+    totalSec: env.demoSecondsPerVisitor,
+    remainingSec: Math.max(0, Math.min(left, env.demoSecondsPerVisitor)),
+    available: !blocked,
+    reason: blocked ? blocked.code : null,
+    message: blocked ? MESSAGES[blocked.code] : null,
+  };
+}
 
-  if (globalLeft < MIN_SESSION_SEC) {
-    throw new UsageLimitError('global_monthly', 'Voice interviews are paused for this month because the free limit has been reached. Please come back next month.');
+// Reserves voice time before a session starts. Returns how many seconds the session may last
+// and which counters were charged, so the unused part can be refunded later.
+export async function reserveVoiceTime(owner) {
+  const list = buckets(owner);
+  const used = await usedSeconds(list.map((b) => b.id));
+
+  const blocked = list.find((b, i) => b.limit - used[i] < MIN_SESSION_SEC);
+  if (blocked) throw new UsageLimitError(blocked.code, MESSAGES[blocked.code]);
+
+  const seconds = Math.floor(Math.min(MAX_SESSION_SEC, ...list.map((b, i) => b.limit - used[i])));
+
+  const charged = [];
+  for (const b of list) {
+    if (!(await addWithinLimit(b.id, seconds, b.limit))) {
+      await Promise.all(charged.map((id) => subtract(id, seconds)));
+      throw new UsageLimitError(b.code, MESSAGES[b.code]);
+    }
+    charged.push(b.id);
   }
-  if (userLeft < MIN_SESSION_SEC) {
-    throw new UsageLimitError('user_daily', "You've used today's free voice time. It resets at midnight UTC, so please come back tomorrow.");
-  }
 
-  const seconds = Math.floor(Math.min(MAX_SESSION_SEC, userLeft, globalLeft));
-
-  if (!(await addWithinLimit(userId(uid, day), seconds, env.userDailyVoiceSec))) {
-    throw new UsageLimitError('user_daily', 'You are starting interviews too quickly. Please wait a moment and try again.');
-  }
-  if (!(await addWithinLimit(globalId(month), seconds, env.globalMonthlyVoiceSec))) {
-    await subtract(userId(uid, day), seconds);
-    throw new UsageLimitError('global_monthly', 'Voice interviews are paused for this month because the free limit has been reached.');
-  }
-
-  return { seconds, day, month };
+  return { seconds, keys: charged };
 }
 
 // Gives back the part of a reservation that was not used. `usedSec` comes from the server's clock.
-export async function refundUnused(uid, reserved, usedSec) {
+export async function refundUnused(reserved, usedSec) {
   const unused = Math.max(0, reserved.seconds - Math.min(reserved.seconds, Math.ceil(usedSec)));
   if (unused === 0) return 0;
-  await Promise.all([subtract(userId(uid, reserved.day), unused), subtract(globalId(reserved.month), unused)]);
+  await Promise.all(reserved.keys.map((id) => subtract(id, unused)));
   return unused;
 }

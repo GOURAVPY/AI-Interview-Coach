@@ -4,7 +4,7 @@ import { getUsage } from '../services/usage.js';
 
 const router = Router();
 router.get('/', requireAuth, async (req, res) => {
-  res.json(await getUsage(req.userId));
+  res.json(await getUsage(req.owner));
 });
 
 export default router;
