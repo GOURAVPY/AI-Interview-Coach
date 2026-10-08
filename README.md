@@ -31,7 +31,7 @@ I built it to prepare for working abroad, and as a way to learn how to build rea
 | Keeping the API key secret | The server mints a single-use token locked to one interview's instructions. The key never reaches the browser. | [`gemini.js`](backend/src/services/gemini.js) |
 | Scores that are consistent | A written rubric with anchored levels, temperature 0, schema-validated JSON. Anything countable is plain code, not AI. | [`scoring.js`](backend/src/prompts/scoring.js), [`metrics.js`](backend/src/services/metrics.js) |
 | Live voice is billed per minute | Time is reserved atomically before a session, refunded on the server's clock, and capped per user, per visitor, per network and globally. | [`usage.js`](backend/src/services/usage.js) |
-| Running untrusted code safely | A candidate's code runs only in a browser Web Worker with a time limit. The server only runs the AI's own reference solution, in a limited thread. | [`runner.ts`](frontend/src/utils/runner.ts), [`sandbox.js`](backend/src/services/sandbox.js) |
+| Running untrusted code safely | A candidate's code runs only in a browser Web Worker with a time limit and no network access. The server only runs the AI's own reference solution, in a limited thread. | [`runner.ts`](frontend/src/utils/runner.ts), [`sandbox.js`](backend/src/services/sandbox.js) |
 | An AI and a user sharing one editor | The AI acts through a tiny handle, every change is logged and undoable, and problems are verified before you see them. | [`CodeEditor.tsx`](frontend/src/components/CodeEditor.tsx), [`codingAi.js`](backend/src/services/codingAi.js) |
 
 **Read the write-up:** [How I kept the conversation fast, the scores fair and the bill small](docs/WRITEUP.md).
@@ -103,6 +103,26 @@ npm run dev              # http://localhost:5173
 Open http://localhost:5173. The frontend proxies `/api` to the backend, so cookies work with no extra setup. Use headphones for the voice interview so the interviewer does not hear itself.
 
 All settings are explained in [`backend/.env.example`](backend/.env.example). The ones that protect your bill are `USER_DAILY_VOICE_MINUTES`, `GLOBAL_MONTHLY_VOICE_MINUTES` and the demo limits. If you run behind a reverse proxy, set `TRUST_PROXY=1`.
+
+## Deploy
+
+The backend serves the built frontend, so the whole app runs as **one service on one URL**. That keeps login cookies first-party and makes the free tier of [Render](https://render.com) enough. [`render.yaml`](render.yaml) describes the service.
+
+1. **MongoDB Atlas:** create a database user, and under *Network Access* allow connections from anywhere (`0.0.0.0/0`), because free hosts do not have a fixed IP.
+2. **Render:** click *New → Blueprint*, pick this repo, and when asked, paste your `MONGODB_URI` and `GEMINI_API_KEY`. `JWT_SECRET` is generated for you. (Or use [this link](https://render.com/deploy?repo=https://github.com/GOURAVPY/AI-Interview-Coach).)
+3. Wait for the build, then open the URL Render gives you. `/api/health` should answer `{"ok":true}`.
+
+Things to know:
+- The free tier **goes to sleep when idle**. The first visit after a pause can take 30 to 60 seconds to wake up.
+- `render.yaml` sets deliberately small voice limits for a public demo (15 minutes per user per day, 120 minutes per month in total). Raise them only if you are happy to pay for more, and keep a spending limit on your Gemini key.
+- The server sends a strict Content-Security-Policy. The only outside address it allows is Gemini's. The test runner for the coding round is served as its own file with a separate policy: it may evaluate code, but it has no network access at all.
+
+To try the production setup on your own machine:
+
+```bash
+cd frontend && npm install && npm run build
+cd ../backend && npm install && NODE_ENV=production node --env-file=.env src/index.js   # http://localhost:4000
+```
 
 ## Tests
 

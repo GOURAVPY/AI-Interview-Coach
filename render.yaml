@@ -1,0 +1,37 @@
+# Render Blueprint: one web service that serves the API and the built frontend.
+# Deploy: https://render.com/deploy?repo=https://github.com/GOURAVPY/AI-Interview-Coach
+services:
+  - type: web
+    name: ai-interview-coach
+    runtime: node
+    plan: free
+    buildCommand: npm --prefix frontend ci --include=dev && npm --prefix frontend run build && npm --prefix backend ci
+    startCommand: npm --prefix backend start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: NODE_ENV
+        value: production
+      # Needed so the per-network demo limit sees each visitor's real address behind Render's proxy.
+      - key: TRUST_PROXY
+        value: "1"
+
+      # Secrets: Render asks you for these when you create the service. Never commit them.
+      - key: MONGODB_URI
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+
+      # Cost control for a public demo. Live voice is billed by the minute, so these are deliberately small.
+      # Raise them only if you are happy to pay for more.
+      - key: USER_DAILY_VOICE_MINUTES
+        value: "15"
+      - key: GLOBAL_MONTHLY_VOICE_MINUTES
+        value: "120"
+      - key: DEMO_SECONDS_PER_VISITOR
+        value: "180"
+      - key: DEMO_NETWORK_DAILY_SECONDS
+        value: "360"

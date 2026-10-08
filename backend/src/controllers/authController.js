@@ -76,10 +76,19 @@ export function logout(_req, res) {
   res.json({ ok: true });
 }
 
+// Answers "who is signed in?" for every page. Visitors without an account get { user: null },
+// not an error, so public pages do not log failed requests.
 export async function me(req, res) {
-  const user = await User.findById(req.userId);
-  if (!user) return res.status(401).json({ error: 'Account not found' });
-  res.json({ user: user.toPublic() });
+  const token = req.cookies?.[COOKIE_NAME];
+  if (!token) return res.json({ user: null });
+
+  try {
+    const payload = jwt.verify(token, env.jwtSecret);
+    const user = await User.findById(payload.sub);
+    res.json({ user: user ? user.toPublic() : null });
+  } catch {
+    res.json({ user: null });
+  }
 }
 
 export async function updateProfile(req, res) {
